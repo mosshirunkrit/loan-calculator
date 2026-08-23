@@ -87,7 +87,7 @@ with tab1:
             
             # เงื่อนไขข้อ 1: ถ้ายอดดอกเบี้ยสะสมมากกว่าดอกเบี้ย 450 วัน ให้แสดงเป็นสีแดง
             if total_interest > interest_450_days:
-                col_x.markdown(f"**ดอกเบี้ย 15 เดือน:** <span style='color:red; font-size:24px; font-weight:bold;'>{interest_450_days:,.2f} บาท</span>", unsafe_allow_html=True)
+                col_x.markdown(f"**ดอกเบี้ย 15 เดือน:** <span style='color:red; font-size:30px; font-weight:bold;'>{interest_450_days:,.2f} บาท</span>", unsafe_allow_html=True)
             else:
                 col_x.metric("ดอกเบี้ย 15 เดือน", f"{interest_450_days:,.2f} บาท")
                 
