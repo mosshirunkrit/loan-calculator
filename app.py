@@ -3,10 +3,10 @@ import numpy_financial as npf
 import streamlit as st
 from datetime import date, timedelta
 
-st.set_page_config(page_title="เครื่องมือวางแผนชำระหนี้สินเชื่อลดต้นลดดอก", page_icon="💰", layout="centered")
+st.set_page_config(page_title="วางแผนชำระหนี้สินเชื่อ", page_icon="💰", layout="centered")
 
-st.title("💰 วางแผนผ่อนชำระสินเชื่อลดต้นลดดอก")
-st.write("เครื่องมือคำนวณและวางแผนชำระหนี้รายเดือน (คำนวณยอดทุกสิ้นเดือน)")
+st.title("💰 วางแผนผ่อนชำระสินเชื่อ ทุ่งหว้า🔥")
+st.write("เครื่องมือคำนวณและวางแผนชำระหนี้รายเดือน")
 
 # --- ฟังก์ชันช่วยคำนวณวันสิ้นเดือนของงวดที่ n ---
 def get_end_of_month_by_index(start_date, month_index):
@@ -244,8 +244,4 @@ with tab3:
                 col_p3.metric("💰 สัดส่วนเงินต้นรวม", f"{p_pct2:.2f}%", f"{total_principal_paid2:,.2f} บาท")
                 col_p4.metric("📈 สัดส่วนดอกเบี้ยรวม", f"{i_pct2:.2f}%", f"{total_interest_paid2:,.2f} บาท")
                 
-                chart_ratio_df2 = pd.DataFrame({
-                    "ประเภท": ["เงินต้นรวม", "ดอกเบี้ยรวม"],
-                    "จำนวนเงิน (บาท)": [total_principal_paid2, total_interest_paid2]
-                }).set_index("ประเภท")
-                st.bar_chart(chart_ratio_df2)
+            
