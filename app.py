@@ -16,6 +16,19 @@ def get_end_of_month_by_index(start_date, month_index):
     next_month_first = (first_of_target_month.replace(day=1) + timedelta(days=32)).replace(day=1)
     return next_month_first - timedelta(days=1)
 
+# --- ฟังก์ชันหา "วันสิ้นสุดไตรมาส" ของไตรมาสถัดไปจากวันที่กำหนด ---
+def get_next_quarter_end(current_date):
+    y = current_date.year
+    m = current_date.month
+    if m <= 3:
+        return date(y, 3, 31)
+    elif m <= 6:
+        return date(y, 6, 30)
+    elif m <= 9:
+        return date(y, 9, 30)
+    else:
+        return date(y, 12, 31)
+
 # --- 1. ข้อมูลตั้งต้นปัจจุบัน ---
 st.header("1. ข้อมูลหนี้ปัจจุบัน")
 col1, col2, col3 = st.columns(3)
@@ -37,7 +50,10 @@ tab1, tab2, tab3 = st.tabs(["🔮 หนี้คงเหลือในอน�
 
 with tab1:
     st.subheader("คำนวณยอดหนี้ตามวันที่ระบุ")
-    target_date = st.date_input("เลือกวันที่ต้องการเช็คยอดหนี้", value=as_of_date + timedelta(days=90))
+    
+    # ค่าเริ่มต้นวันที่เป็นวันสิ้นสุดไตรมาสอัตโนมัติ (ข้อ 4)
+    default_target_date = get_next_quarter_end(as_of_date)
+    target_date = st.date_input("เลือกวันที่ต้องการเช็คยอดหนี้", value=default_target_date)
     
     if st.button("คำนวณยอดหนี้ ณ วันที่เลือก", key="btn1"):
         if target_date <= as_of_date:
@@ -45,15 +61,38 @@ with tab1:
         else:
             sim_balance = max(0, principal_current)
             days_diff = (target_date - as_of_date).days
+            
+            # ดอกเบี้ยสะสมตามระยะเวลาที่เลือก
             sim_interest_new = sim_balance * (annual_rate / 100.0) * (days_diff / 365.0)
             total_interest = accrued_interest_input + sim_interest_new
             est_total = sim_balance + total_interest
+            
+            # คำนวณดอกเบี้ย 450 วันจากต้นเงินปัจจุบัน (ข้อ 1)
+            interest_450_days = sim_balance * (annual_rate / 100.0) * (450.0 / 365.0)
+            
+            # คำนวณสัดส่วน 30% และ 15% ของดอกเบี้ยสะสมทั้งหมด (ข้อ 2 และ 3)
+            interest_30_pct = total_interest * 0.30
+            interest_15_pct = total_interest * 0.15
             
             st.info(f"📅 ณ วันที่ {target_date.strftime('%d/%m/%Y')} (อีก {days_diff} วันข้างหน้า)")
             col_a, col_b, col_c = st.columns(3)
             col_a.metric("เงินต้นคงเหลือ", f"{sim_balance:,.2f} บาท")
             col_b.metric("ดอกเบี้ยสะสมทั้งหมด", f"{total_interest:,.2f} บาท")
             col_c.metric("ยอดหนี้รวมทั้งสิ้น", f"{est_total:,.2f} บาท")
+            
+            st.write("---")
+            st.subheader("📌 ข้อมูลวิเคราะห์ดอกเบี้ยเพิ่มเติม")
+            
+            col_x, col_y, col_z = st.columns(3)
+            
+            # เงื่อนไขข้อ 1: ถ้ายอดดอกเบี้ยสะสมมากกว่าดอกเบี้ย 450 วัน ให้แสดงเป็นสีแดง
+            if total_interest > interest_450_days:
+                col_x.markdown(f"**ดอกเบี้ย 15 เดือน:** <span style='color:red; font-size:18px; font-weight:bold;'>{interest_450_days:,.2f} บาท</span>", unsafe_allow_html=True)
+            else:
+                col_x.metric("ดอกเบี้ย 15 เดือน", f"{interest_450_days:,.2f} บาท")
+                
+            col_y.metric("30% ของดอกเบี้ยสะสม", f"{interest_30_pct:,.2f} บาท")
+            col_z.metric("15% ของดอกเบี้ยสะสม", f"{interest_15_pct:,.2f} บาท")
 
 with tab2:
     st.subheader("แผนผ่อนชำระด้วยยอดคงที่ต่อเดือน (ทุกสิ้นเดือน)")
