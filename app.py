@@ -3,11 +3,6 @@ import numpy_financial as npf
 import streamlit as st
 from datetime import date, timedelta
 
-st.set_page_config(page_title="วางแผนชำระหนี้", page_icon="💰", layout="centered")
-
-st.title("💰 วางแผนผ่อนชำระสินเชื่อ")
-st.write("เครื่องมือคำนวณและวางแผนชำระหนี้รายเดือน")
-
 # --- ฟังก์ชันช่วยคำนวณวันสิ้นเดือนถัดไป ---
 def get_next_end_of_month(current_date):
     next_month_first = (current_date.replace(day=1) + timedelta(days=32)).replace(day=1)
@@ -19,7 +14,6 @@ col1, col2, col3 = st.columns(3)
 with col1:
     principal_current = st.number_input("ยอดเงินต้นคงเหลือปัจจุบัน (บาท)", value=100000.0, step=1000.0, format="%.2f")
 with col2:
-    # ตั้งค่าเริ่มต้น 6.575 และสเต็ป 0.500 เพื่อให้กดบวกแล้วลงท้ายด้วย .575 เสมอ
     annual_rate = st.number_input("ดอกเบี้ย (% ต่อปี)", value=6.575, step=0.500, format="%.3f")
 with col3:
     as_of_date = st.date_input("ข้อมูล ณ วันที่", value=date.today())
@@ -69,12 +63,12 @@ with tab2:
             sim_date = as_of_date
             month_count = 0
             
-            # คำนวณไปตามจริงสูงสุด 360 งวด (30 ปี) แม้ยอดผ่อนจะน้อยกว่าดอกเบี้ยก็ตาม
             while (temp_balance > 0 or temp_accrued_interest > 0) and month_count < 360:
                 month_count += 1
                 next_end_date = get_next_end_of_month(sim_date)
                 days_m = (next_end_date - sim_date).days
                 
+                # คำนวณดอกเบี้ยจากเงินต้นคงเหลือก่อนเริ่มงวดนี้
                 interest_new = temp_balance * (annual_rate / 100.0) * (days_m / 365.0)
                 total_interest_due = temp_accrued_interest + interest_new
                 
@@ -91,6 +85,7 @@ with tab2:
                     actual_pay = fixed_pmt
                     temp_accrued_interest = total_interest_due - fixed_pmt
                 
+                # หักเงินต้นหลังคำนวณดอกเบี้ยของงวดนี้เสร็จสิ้นแล้ว
                 temp_balance -= principal_paid
                 if temp_balance < 0: temp_balance = 0
                 
@@ -127,7 +122,6 @@ with tab2:
             
             st.dataframe(df_res_display, use_container_width=True)
             
-            # --- แสดงกราฟแสดงแนวโน้มเงินต้นคงเหลือ ---
             st.subheader("📈 กราฟแสดงแนวโน้มเงินต้นคงเหลือตลอดสัญญา")
             chart_data = df_res.set_index("วันที่สิ้นเดือน")[["เงินต้นคงเหลือ"]]
             st.line_chart(chart_data)
@@ -161,6 +155,7 @@ with tab3:
                 next_end_date = get_next_end_of_month(sim_date)
                 days_m = (next_end_date - sim_date).days
                 
+                # คำนวณดอกเบี้ยใหม่จากเงินต้นคงเหลือก่อนเริ่มงวดนี้
                 interest_new = temp_balance * (annual_rate / 100.0) * (days_m / 365.0)
                 total_interest_due = temp_accrued_interest + interest_new
                 
@@ -210,7 +205,6 @@ with tab3:
             
             st.dataframe(df_res2_display, use_container_width=True)
             
-            # --- แสดงกราฟแนวโน้มเงินต้นคงเหลือ ---
             st.subheader("📈 กราฟแสดงแนวโน้มเงินต้นคงเหลือตามกำหนดเวลา")
             chart_data2 = df_res2.set_index("วันที่สิ้นเดือน")[["เงินต้นคงเหลือ"]]
             st.line_chart(chart_data2)
