@@ -76,10 +76,11 @@ with tab2:
                 next_end_date = get_end_of_month_by_index(as_of_date, month_count)
                 days_m = (next_end_date - prev_date).days
                 
+                # ดอกเบี้ยที่งอกขึ้นมาใหม่ในงวดนี้
                 interest_new = temp_balance * (annual_rate / 100.0) * (days_m / 365.0)
                 total_interest_due = temp_accrued_interest + interest_new
                 
-                if fixed_pmt >= total_interest_due:
+                if fixed_pmt > total_interest_due:
                     interest_paid = total_interest_due
                     principal_paid = fixed_pmt - total_interest_due
                     if principal_paid > temp_balance:
@@ -130,7 +131,7 @@ with tab2:
             
             st.dataframe(df_res_display, use_container_width=True)
             
-            # --- สัดส่วนยอดชำระทั้งหมด (แสดงเปอร์เซ็นต์และกราฟชัดเจน ไม่เพี้ยน) ---
+            # --- สัดส่วนยอดชำระทั้งหมด ---
             st.subheader("📊 สัดส่วนยอดชำระทั้งหมด (เงินต้นรวม vs ดอกเบี้ยรวม)")
             total_principal_paid = df_res["ตัดเงินต้น"].sum()
             total_interest_paid = df_res["ดอกเบี้ยที่จ่าย"].sum()
@@ -182,15 +183,15 @@ with tab3:
                 interest_new = temp_balance * (annual_rate / 100.0) * (days_m / 365.0)
                 total_interest_due = temp_accrued_interest + interest_new
                 
-                interest_paid = total_interest_due
-                principal_paid = pmt_calc - interest_paid
-                
-                if m == target_months or (temp_balance + interest_paid) <= pmt_calc:
-                    if principal_paid > temp_balance:
-                        principal_paid = temp_balance
+                # หากเป็นงวดสุดท้าย บังคับตัดเงินต้นส่วนที่เหลือทั้งหมดเพื่อให้ยอดปิดจบพอดี
+                if m == target_months or temp_balance + total_interest_due <= pmt_calc:
+                    interest_paid = total_interest_due
+                    principal_paid = temp_balance
                     actual_pay = interest_paid + principal_paid
                     temp_accrued_interest = 0.0
                 else:
+                    interest_paid = total_interest_due
+                    principal_paid = pmt_calc - interest_paid
                     if principal_paid < 0:
                         interest_paid = pmt_calc
                         principal_paid = 0.0
