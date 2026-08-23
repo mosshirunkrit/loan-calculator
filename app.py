@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy_financial as npf
 import streamlit as st
-import matplotlib.pyplot as plt
 from datetime import date, timedelta
 
 st.set_page_config(page_title="เครื่องมือวางแผนชำระหนี้สินเชื่อลดต้นลดดอก", page_icon="💰", layout="centered")
@@ -131,21 +130,25 @@ with tab2:
             
             st.dataframe(df_res_display, use_container_width=True)
             
-            # --- กราฟวงกลมแสดงสัดส่วนเงินต้นรวม vs ดอกเบี้ยรวม ---
-            st.subheader("🥧 สัดส่วนยอดชำระทั้งหมด (เงินต้นรวม vs ดอกเบี้ยรวม)")
+            # --- สัดส่วนยอดชำระทั้งหมด (แสดงเปอร์เซ็นต์และกราฟชัดเจน ไม่เพี้ยน) ---
+            st.subheader("📊 สัดส่วนยอดชำระทั้งหมด (เงินต้นรวม vs ดอกเบี้ยรวม)")
             total_principal_paid = df_res["ตัดเงินต้น"].sum()
             total_interest_paid = df_res["ดอกเบี้ยที่จ่าย"].sum()
+            grand_total = total_principal_paid + total_interest_paid
             
-            fig, ax = plt.subplots(figsize=(6, 6))
-            labels = ['เงินต้นรวม', 'ดอกเบี้ยรวม']
-            sizes = [total_principal_paid, total_interest_paid]
-            colors = ['#ff9999', '#66b3ff']
-            
-            # วาดแผนภูมิวงกลมแบบมีเปอร์เซ็นต์
-            ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140, colors=colors, 
-                   textprops={'fontsize': 12}, wedgeprops={'edgecolor': 'white', 'linewidth': 1.5})
-            ax.axis('equal') 
-            st.pyplot(fig)
+            if grand_total > 0:
+                p_pct = (total_principal_paid / grand_total) * 100
+                i_pct = (total_interest_paid / grand_total) * 100
+                
+                col_p1, col_p2 = st.columns(2)
+                col_p1.metric("💰 สัดส่วนเงินต้นรวม", f"{p_pct:.2f}%", f"{total_principal_paid:,.2f} บาท")
+                col_p2.metric("📈 สัดส่วนดอกเบี้ยรวม", f"{i_pct:.2f}%", f"{total_interest_paid:,.2f} บาท")
+                
+                chart_ratio_df = pd.DataFrame({
+                    "ประเภท": ["เงินต้นรวม", "ดอกเบี้ยรวม"],
+                    "จำนวนเงิน (บาท)": [total_principal_paid, total_interest_paid]
+                }).set_index("ประเภท")
+                st.bar_chart(chart_ratio_df)
 
 with tab3:
     st.subheader("คำนวณค่างวดรายเดือนเพื่อให้หมดหนี้ตามกำหนด (ทุกสิ้นเดือน)")
@@ -226,17 +229,22 @@ with tab3:
             
             st.dataframe(df_res2_display, use_container_width=True)
             
-            # --- กราฟวงกลมแสดงสัดส่วนเงินต้นรวม vs ดอกเบี้ยรวม (แท็บที่ 3) ---
-            st.subheader("🥧 สัดส่วนยอดชำระทั้งหมด (เงินต้นรวม vs ดอกเบี้ยรวม)")
+            # --- สัดส่วนยอดชำระทั้งหมด (แท็บที่ 3) ---
+            st.subheader("📊 สัดส่วนยอดชำระทั้งหมด (เงินต้นรวม vs ดอกเบี้ยรวม)")
             total_principal_paid2 = df_res2["ตัดเงินต้น"].sum()
             total_interest_paid2 = df_res2["ดอกเบี้ยที่จ่าย"].sum()
+            grand_total2 = total_principal_paid2 + total_interest_paid2
             
-            fig2, ax2 = plt.subplots(figsize=(6, 6))
-            labels2 = ['เงินต้นรวม', 'ดอกเบี้ยรวม']
-            sizes2 = [total_principal_paid2, total_interest_paid2]
-            colors2 = ['#ff9999', '#66b3ff']
-            
-            ax2.pie(sizes2, labels=labels2, autopct='%1.1f%%', startangle=140, colors=colors2, 
-                    textprops={'fontsize': 12}, wedgeprops={'edgecolor': 'white', 'linewidth': 1.5})
-            ax2.axis('equal') 
-            st.pyplot(fig2)
+            if grand_total2 > 0:
+                p_pct2 = (total_principal_paid2 / grand_total2) * 100
+                i_pct2 = (total_interest_paid2 / grand_total2) * 100
+                
+                col_p3, col_p4 = st.columns(2)
+                col_p3.metric("💰 สัดส่วนเงินต้นรวม", f"{p_pct2:.2f}%", f"{total_principal_paid2:,.2f} บาท")
+                col_p4.metric("📈 สัดส่วนดอกเบี้ยรวม", f"{i_pct2:.2f}%", f"{total_interest_paid2:,.2f} บาท")
+                
+                chart_ratio_df2 = pd.DataFrame({
+                    "ประเภท": ["เงินต้นรวม", "ดอกเบี้ยรวม"],
+                    "จำนวนเงิน (บาท)": [total_principal_paid2, total_interest_paid2]
+                }).set_index("ประเภท")
+                st.bar_chart(chart_ratio_df2)
