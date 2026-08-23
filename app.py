@@ -3,6 +3,11 @@ import numpy_financial as npf
 import streamlit as st
 from datetime import date, timedelta
 
+st.set_page_config(page_title="เครื่องมือวางแผนชำระหนี้สินเชื่อลดต้นลดดอก", page_icon="💰", layout="centered")
+
+st.title("💰 วางแผนผ่อนชำระสินเชื่อลดต้นลดดอก")
+st.write("เครื่องมือคำนวณและวางแผนชำระหนี้รายเดือน (คำนวณยอดทุกสิ้นเดือน)")
+
 # --- ฟังก์ชันช่วยคำนวณวันสิ้นเดือนถัดไป ---
 def get_next_end_of_month(current_date):
     next_month_first = (current_date.replace(day=1) + timedelta(days=32)).replace(day=1)
@@ -68,7 +73,7 @@ with tab2:
                 next_end_date = get_next_end_of_month(sim_date)
                 days_m = (next_end_date - sim_date).days
                 
-                # คำนวณดอกเบี้ยจากเงินต้นคงเหลือก่อนเริ่มงวดนี้
+                # ดอกเบี้ยที่งอกขึ้นมาใหม่ในงวดนี้
                 interest_new = temp_balance * (annual_rate / 100.0) * (days_m / 365.0)
                 total_interest_due = temp_accrued_interest + interest_new
                 
@@ -85,7 +90,6 @@ with tab2:
                     actual_pay = fixed_pmt
                     temp_accrued_interest = total_interest_due - fixed_pmt
                 
-                # หักเงินต้นหลังคำนวณดอกเบี้ยของงวดนี้เสร็จสิ้นแล้ว
                 temp_balance -= principal_paid
                 if temp_balance < 0: temp_balance = 0
                 
@@ -93,7 +97,8 @@ with tab2:
                     "งวดที่": month_count,
                     "วันที่สิ้นเดือน": next_end_date.strftime('%d/%m/%Y'),
                     "ยอดที่ต้องจ่าย": round(actual_pay, 2),
-                    "ดอกเบี้ย": round(interest_paid, 2),
+                    "ดอกเบี้ยที่จ่าย": round(interest_paid, 2),
+                    "ดอกเบี้ยค้างเหลือ": round(temp_accrued_interest, 2),
                     "ตัดเงินต้น": round(principal_paid, 2),
                     "เงินต้นคงเหลือ": round(temp_balance, 2)
                 })
@@ -107,7 +112,8 @@ with tab2:
                 "งวดที่": ["รวมทั้งสิ้น"],
                 "วันที่สิ้นเดือน": [""],
                 "ยอดที่ต้องจ่าย": [round(df_res["ยอดที่ต้องจ่าย"].sum(), 2)],
-                "ดอกเบี้ย": [round(df_res["ดอกเบี้ย"].sum(), 2)],
+                "ดอกเบี้ยที่จ่าย": [round(df_res["ดอกเบี้ยที่จ่าย"].sum(), 2)],
+                "ดอกเบี้ยค้างเหลือ": [""],
                 "ตัดเงินต้น": [round(df_res["ตัดเงินต้น"].sum(), 2)],
                 "เงินต้นคงเหลือ": [""]
             })
@@ -155,7 +161,6 @@ with tab3:
                 next_end_date = get_next_end_of_month(sim_date)
                 days_m = (next_end_date - sim_date).days
                 
-                # คำนวณดอกเบี้ยใหม่จากเงินต้นคงเหลือก่อนเริ่มงวดนี้
                 interest_new = temp_balance * (annual_rate / 100.0) * (days_m / 365.0)
                 total_interest_due = temp_accrued_interest + interest_new
                 
@@ -185,7 +190,8 @@ with tab3:
                     "งวดที่": m,
                     "วันที่สิ้นเดือน": next_end_date.strftime('%d/%m/%Y'),
                     "ยอดที่ต้องจ่าย": round(actual_pay, 2),
-                    "ดอกเบี้ย": round(interest_paid, 2),
+                    "ดอกเบี้ยที่จ่าย": round(interest_paid, 2),
+                    "ดอกเบี้ยค้างเหลือ": round(temp_accrued_interest, 2),
                     "ตัดเงินต้น": round(principal_paid, 2),
                     "เงินต้นคงเหลือ": round(temp_balance, 2)
                 })
@@ -197,7 +203,8 @@ with tab3:
                 "งวดที่": ["รวมทั้งสิ้น"],
                 "วันที่สิ้นเดือน": [""],
                 "ยอดที่ต้องจ่าย": [round(df_res2["ยอดที่ต้องจ่าย"].sum(), 2)],
-                "ดอกเบี้ย": [round(df_res2["ดอกเบี้ย"].sum(), 2)],
+                "ดอกเบี้ยที่จ่าย": [round(df_res2["ดอกเบี้ยที่จ่าย"].sum(), 2)],
+                "ดอกเบี้ยค้างเหลือ": [""],
                 "ตัดเงินต้น": [round(df_res2["ตัดเงินต้น"].sum(), 2)],
                 "เงินต้นคงเหลือ": [""]
             })
