@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy_financial as npf
 import streamlit as st
+import matplotlib.pyplot as plt
 from datetime import date, timedelta
 
 st.set_page_config(page_title="เครื่องมือวางแผนชำระหนี้สินเชื่อลดต้นลดดอก", page_icon="💰", layout="centered")
@@ -33,7 +34,7 @@ st.info(f"📌 **เงินต้นปัจจุบัน:** {principal_cur
 
 # --- 2. การคำนวณวางแผนอนาคต (ตัดรอบทุกสิ้นเดือน) ---
 st.header("2. คำนวณวางแผนอนาคต (รอบสิ้นเดือน)")
-tab1, tab2, tab3 = st.tabs(["🔮 หนี้คงเหลือในอนาคտ", "⏳ ระยะเวลาหมดหนี้", "💵 ค่างวดที่ต้องส่ง"])
+tab1, tab2, tab3 = st.tabs(["🔮 หนี้คงเหลือในอนาคต", "⏳ ระยะเวลาหมดหนี้", "💵 ค่างวดที่ต้องส่ง"])
 
 with tab1:
     st.subheader("คำนวณยอดหนี้ตามวันที่ระบุในอนาคต")
@@ -110,7 +111,6 @@ with tab2:
             
             df_res = pd.DataFrame(future_schedule)
             
-            # DataFrame สำหรับตารางแสดงผล (มีแถวรวม)
             total_row = pd.DataFrame({
                 "งวดที่": ["รวมทั้งสิ้น"],
                 "วันที่สิ้นเดือน": [""],
@@ -131,10 +131,21 @@ with tab2:
             
             st.dataframe(df_res_display, use_container_width=True)
             
-            # 🛑 สำคัญ: ใช้เฉพาะ df_res ล้วนๆ (ไม่มีแถวรวม) มาพล็อตกราฟ
-            st.subheader("📈 กราฟแสดงแนวโน้มเงินต้นคงเหลือตลอดสัญญา")
-            chart_data = df_res.set_index("วันที่สิ้นเดือน")[["เงินต้นคงเหลือ"]]
-            st.line_chart(chart_data)
+            # --- กราฟวงกลมแสดงสัดส่วนเงินต้นรวม vs ดอกเบี้ยรวม ---
+            st.subheader("🥧 สัดส่วนยอดชำระทั้งหมด (เงินต้นรวม vs ดอกเบี้ยรวม)")
+            total_principal_paid = df_res["ตัดเงินต้น"].sum()
+            total_interest_paid = df_res["ดอกเบี้ยที่จ่าย"].sum()
+            
+            fig, ax = plt.subplots(figsize=(6, 6))
+            labels = ['เงินต้นรวม', 'ดอกเบี้ยรวม']
+            sizes = [total_principal_paid, total_interest_paid]
+            colors = ['#ff9999', '#66b3ff']
+            
+            # วาดแผนภูมิวงกลมแบบมีเปอร์เซ็นต์
+            ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140, colors=colors, 
+                   textprops={'fontsize': 12}, wedgeprops={'edgecolor': 'white', 'linewidth': 1.5})
+            ax.axis('equal') 
+            st.pyplot(fig)
 
 with tab3:
     st.subheader("คำนวณค่างวดรายเดือนเพื่อให้หมดหนี้ตามกำหนด (ทุกสิ้นเดือน)")
@@ -202,7 +213,6 @@ with tab3:
                 
             df_res2 = pd.DataFrame(future_schedule_2)
             
-            # DataFrame สำหรับตารางแสดงผล (มีแถวรวม)
             total_row2 = pd.DataFrame({
                 "งวดที่": ["รวมทั้งสิ้น"],
                 "วันที่สิ้นเดือน": [""],
@@ -216,7 +226,17 @@ with tab3:
             
             st.dataframe(df_res2_display, use_container_width=True)
             
-            # 🛑 สำคัญ: ใช้เฉพาะ df_res2 ล้วนๆ (ไม่มีแถวรวม) มาพล็อตกราฟ
-            st.subheader("📈 กราฟแสดงแนวโน้มเงินต้นคงเหลือตามกำหนดเวลา")
-            chart_data2 = df_res2.set_index("วันที่สิ้นเดือน")[["เงินต้นคงเหลือ"]]
-            st.line_chart(chart_data2)
+            # --- กราฟวงกลมแสดงสัดส่วนเงินต้นรวม vs ดอกเบี้ยรวม (แท็บที่ 3) ---
+            st.subheader("🥧 สัดส่วนยอดชำระทั้งหมด (เงินต้นรวม vs ดอกเบี้ยรวม)")
+            total_principal_paid2 = df_res2["ตัดเงินต้น"].sum()
+            total_interest_paid2 = df_res2["ดอกเบี้ยที่จ่าย"].sum()
+            
+            fig2, ax2 = plt.subplots(figsize=(6, 6))
+            labels2 = ['เงินต้นรวม', 'ดอกเบี้ยรวม']
+            sizes2 = [total_principal_paid2, total_interest_paid2]
+            colors2 = ['#ff9999', '#66b3ff']
+            
+            ax2.pie(sizes2, labels=labels2, autopct='%1.1f%%', startangle=140, colors=colors2, 
+                    textprops={'fontsize': 12}, wedgeprops={'edgecolor': 'white', 'linewidth': 1.5})
+            ax2.axis('equal') 
+            st.pyplot(fig2)
