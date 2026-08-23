@@ -8,11 +8,13 @@ st.set_page_config(page_title="เครื่องมือวางแผน�
 st.title("💰 วางแผนผ่อนชำระสินเชื่อลดต้นลดดอก")
 st.write("เครื่องมือคำนวณและวางแผนชำระหนี้รายเดือน (คำนวณยอดทุกสิ้นเดือน)")
 
-# --- ฟังก์ชันช่วยคำนวณวันสิ้นเดือนของแต่ละงวด ---
-def get_end_of_month(target_date):
-    # ขยับไปวันที่ 1 ของเดือนถัดไป แล้วถอยหลัง 1 วัน จะได้วันสิ้นเดือนของเดือนนั้นๆ พอดี
-    next_month_first = (target_date.replace(day=1) + timedelta(days=32)).replace(day=1)
-    return next_month_first - timedelta(days=1)
+# --- ฟังก์ชันช่วยคำนวณวันสิ้นเดือนของเดือนถัดไป ---
+def get_next_end_of_month(current_date):
+    # ขยับข้ามไปตั้งต้นที่วันที่ 1 ของเดือนถัดไปอย่างแน่นอน
+    first_day_next_month = (current_date.replace(day=1) + timedelta(days=32)).replace(day=1)
+    # จากนั้นหาว่าวันสิ้นเดือนของเดือนถัดไปนั้นคือวันไหน
+    next_month_after = (first_day_next_month + timedelta(days=32)).replace(day=1)
+    return next_month_after - timedelta(days=1)
 
 # --- 1. ข้อมูลตั้งต้นปัจจุบัน ---
 st.header("1. ข้อมูลหนี้ปัจจุบัน")
@@ -71,10 +73,9 @@ with tab2:
             
             while (temp_balance > 0 or temp_accrued_interest > 0) and month_count < 360:
                 month_count += 1
-                next_end_date = get_end_of_month(current_period_start)
+                next_end_date = get_next_end_of_month(current_period_start)
                 days_m = (next_end_date - current_period_start).days
                 
-                # คำนวณดอกเบี้ยใหม่ตามจำนวนวันจริงในงวดนั้น
                 interest_new = temp_balance * (annual_rate / 100.0) * (days_m / 365.0)
                 total_interest_due = temp_accrued_interest + interest_new
                 
@@ -104,12 +105,12 @@ with tab2:
                     "เงินต้นคงเหลือ": round(temp_balance, 2)
                 })
                 
+                # อัปเดตจุดเริ่มต้นรอบถัดไปเป็นวันสิ้นเดือนของงวดนี้
                 current_period_start = next_end_date
                 if temp_balance == 0 and temp_accrued_interest == 0: break
             
             df_res = pd.DataFrame(future_schedule)
             
-            # สร้างตารางสำหรับแสดงผล (รวมแถวสรุป)
             total_row = pd.DataFrame({
                 "งวดที่": ["รวมทั้งสิ้น"],
                 "วันที่สิ้นเดือน": [""],
@@ -130,7 +131,6 @@ with tab2:
             
             st.dataframe(df_res_display, use_container_width=True)
             
-            # ใช้ df_res ล้วนๆ ในการพล็อตกราฟ เพื่อป้องกันกราฟพัง
             st.subheader("📈 กราฟแสดงแนวโน้มเงินต้นคงเหลือตลอดสัญญา")
             chart_data = df_res.set_index("วันที่สิ้นเดือน")[["เงินต้นคงเหลือ"]]
             st.line_chart(chart_data)
@@ -161,17 +161,15 @@ with tab3:
             
             for m in range(1, int(target_months) + 1):
                 if temp_balance <= 0 and temp_accrued_interest <= 0: break
-                next_end_date = get_end_of_month(current_period_start)
+                next_end_date = get_next_end_of_month(current_period_start)
                 days_m = (next_end_date - current_period_start).days
                 
                 interest_new = temp_balance * (annual_rate / 100.0) * (days_m / 365.0)
                 total_interest_due = temp_accrued_interest + interest_new
                 
-                # คำนวณค่างวดปกติในแต่ละเดือนตามสูตรมาตรฐาน
                 interest_paid = total_interest_due
                 principal_paid = pmt_calc - interest_paid
                 
-                # หากงวดสุดท้าย เงินต้นหรือดอกเบี้ยที่เหลือคือน้อยกว่าค่างวด ให้ปรับยอดจ่ายพอดีปิดหนี้ ไม่ให้ยอดโดดกระชาก
                 if m == target_months or (temp_balance + interest_paid) <= pmt_calc:
                     if principal_paid > temp_balance:
                         principal_paid = temp_balance
@@ -179,7 +177,6 @@ with tab3:
                     temp_accrued_interest = 0.0
                 else:
                     if principal_paid < 0:
-                        # กรณีค่างวดน้อยกว่าดอกเบี้ยที่งอก
                         interest_paid = pmt_calc
                         principal_paid = 0.0
                         actual_pay = pmt_calc
@@ -204,7 +201,6 @@ with tab3:
                 
             df_res2 = pd.DataFrame(future_schedule_2)
             
-            # สร้างตารางสำหรับแสดงผล (รวมแถวสรุป)
             total_row2 = pd.DataFrame({
                 "งวดที่": ["รวมทั้งสิ้น"],
                 "วันที่สิ้นเดือน": [""],
@@ -218,7 +214,6 @@ with tab3:
             
             st.dataframe(df_res2_display, use_container_width=True)
             
-            # ใช้ df_res2 ล้วนๆ ในการพล็อตกราฟ
             st.subheader("📈 กราฟแสดงแนวโน้มเงินต้นคงเหลือตามกำหนดเวลา")
             chart_data2 = df_res2.set_index("วันที่สิ้นเดือน")[["เงินต้นคงเหลือ"]]
             st.line_chart(chart_data2)
