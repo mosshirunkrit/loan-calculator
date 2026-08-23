@@ -19,7 +19,7 @@ col1, col2, col3 = st.columns(3)
 with col1:
     principal_current = st.number_input("ยอดเงินต้นคงเหลือปัจจุบัน (บาท)", value=100000.0, step=1000.0, format="%.2f")
 with col2:
-    annual_rate = st.number_input("ดอกเบี้ย (% ต่อปี)", value=15.000, step=0.001, format="%.3f")
+    annual_rate = st.number_input("ดอกเบี้ย (% ต่อปี)", value=6.575, step=0.5, format="%.3f")
 with col3:
     as_of_date = st.date_input("ข้อมูล ณ วันที่", value=date.today())
 
