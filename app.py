@@ -36,8 +36,8 @@ st.header("2. วางแผนอนาคต")
 tab1, tab2, tab3 = st.tabs(["🔮 หนี้คงเหลือในอนาคต", "⏳ ระยะเวลาหมดหนี้", "💵 ค่างวดที่ต้องส่ง"])
 
 with tab1:
-    st.subheader("คำนวณยอดหนี้ตามวันที่ระบุในอนาคต")
-    target_date = st.date_input("เลือกวันที่ต้องการเช็คยอดหนี้ (ในอนาคต)", value=as_of_date + timedelta(days=90))
+    st.subheader("คำนวณยอดหนี้ตามวันที่ระบุ")
+    target_date = st.date_input("เลือกวันที่ต้องการเช็คยอดหนี้", value=as_of_date + timedelta(days=90))
     
     if st.button("คำนวณยอดหนี้ ณ วันที่เลือก", key="btn1"):
         if target_date <= as_of_date:
@@ -152,7 +152,7 @@ with tab2:
                 st.bar_chart(chart_ratio_df)
 
 with tab3:
-    st.subheader("คำนวณค่างวดรายเดือนเพื่อให้หมดหนี้ตามกำหนด (ทุกสิ้นเดือน)")
+    st.subheader("คำนวณงวดต่อเดือนให้หมดหนี้ตามกำหนด (ทุกสิ้นเดือน)")
     target_months = st.number_input("ระยะเวลาที่ต้องการ (เดือน)", value=12, step=1, key="inp_months")
     
     if st.button("คำนวณค่างวดและแสดงตาราง", key="btn3"):
