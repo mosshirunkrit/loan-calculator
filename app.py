@@ -5,13 +5,16 @@ from datetime import date, timedelta
 
 st.set_page_config(page_title="เครื่องมือวางแผนชำระหนี้สินเชื่อลดต้นลดดอก", page_icon="💰", layout="centered")
 
-st.title("💰 วางแผนผ่อนชำระสินเชื่อ")
+st.title("💰 วางแผนผ่อนชำระสินเชื่อลดต้นลดดอก")
 st.write("เครื่องมือคำนวณและวางแผนชำระหนี้รายเดือน (คำนวณยอดทุกสิ้นเดือน)")
 
-# --- ฟังก์ชันช่วยคำนวณวันสิ้นเดือนถัดไป ---
+# --- ฟังก์ชันช่วยคำนวณวันสิ้นเดือนของเดือนถัดไป ---
 def get_next_end_of_month(current_date):
-    next_month_first = (current_date.replace(day=1) + timedelta(days=32)).replace(day=1)
-    return next_month_first - timedelta(days=1)
+    # ขยับไปวันที่ 1 ของเดือนถัดไปอย่างแน่นอน (บวกวันปัจจุบันจนพ้นเดือนนี้ไปตั้งหลักต้นเดือนหน้า)
+    first_day_of_next_month = (current_date.replace(day=1) + timedelta(days=32)).replace(day=1)
+    # จากนั้นขยับไปอีกเดือนเพื่อให้ได้วันสิ้นเดือนของเดือนถัดไปจริงๆ
+    first_day_of_following_month = (first_day_of_next_month + timedelta(days=32)).replace(day=1)
+    return first_day_of_following_month - timedelta(days=1)
 
 # --- 1. ข้อมูลตั้งต้นปัจจุบัน ---
 st.header("1. ข้อมูลหนี้ปัจจุบัน")
@@ -73,7 +76,7 @@ with tab2:
                 next_end_date = get_next_end_of_month(current_period_start)
                 days_m = (next_end_date - current_period_start).days
                 
-                # คำนวณดอกเบี้ยใหม่จากเงินต้นคงเหลือจริงในแต่ละเดือนและจำนวนวันจริง
+                # คำนวณดอกเบี้ยใหม่จากเงินต้นคงเหลือจริงและจำนวนวันจริงในเดือนนั้นๆ
                 interest_new = temp_balance * (annual_rate / 100.0) * (days_m / 365.0)
                 total_interest_due = temp_accrued_interest + interest_new
                 
@@ -103,7 +106,6 @@ with tab2:
                     "เงินต้นคงเหลือ": round(temp_balance, 2)
                 })
                 
-                # ขยับวันเริ่มต้นรอบถัดไปเป็นวันสิ้นเดือนของงวดนี้
                 current_period_start = next_end_date
                 if temp_balance == 0 and temp_accrued_interest == 0: break
             
