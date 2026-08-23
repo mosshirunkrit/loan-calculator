@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 st.set_page_config(page_title="เครื่องมือวางแผนชำระหนี้สินเชื่อลดต้นลดดอก", page_icon="💰", layout="centered")
 
-st.title("💰 วางแผนผ่อนชำระสินเชื่อลดต้นลดดอก")
+st.title("💰 วางแผนผ่อนชำระสินเชื่อ")
 st.write("เครื่องมือคำนวณและวางแผนชำระหนี้รายเดือน (คำนวณยอดทุกสิ้นเดือน)")
 
 # --- ฟังก์ชันช่วยคำนวณวันสิ้นเดือนถัดไป ---
@@ -65,15 +65,15 @@ with tab2:
             temp_balance = bal_target
             temp_accrued_interest = accrued_interest_input
             future_schedule = []
-            sim_date = as_of_date
+            current_period_start = as_of_date
             month_count = 0
             
             while (temp_balance > 0 or temp_accrued_interest > 0) and month_count < 360:
                 month_count += 1
-                next_end_date = get_next_end_of_month(sim_date)
-                days_m = (next_end_date - sim_date).days
+                next_end_date = get_next_end_of_month(current_period_start)
+                days_m = (next_end_date - current_period_start).days
                 
-                # ดอกเบี้ยที่งอกขึ้นมาใหม่ในงวดนี้
+                # คำนวณดอกเบี้ยใหม่จากเงินต้นคงเหลือจริงในแต่ละเดือนและจำนวนวันจริง
                 interest_new = temp_balance * (annual_rate / 100.0) * (days_m / 365.0)
                 total_interest_due = temp_accrued_interest + interest_new
                 
@@ -103,7 +103,8 @@ with tab2:
                     "เงินต้นคงเหลือ": round(temp_balance, 2)
                 })
                 
-                sim_date = next_end_date
+                # ขยับวันเริ่มต้นรอบถัดไปเป็นวันสิ้นเดือนของงวดนี้
+                current_period_start = next_end_date
                 if temp_balance == 0 and temp_accrued_interest == 0: break
             
             df_res = pd.DataFrame(future_schedule)
@@ -154,12 +155,12 @@ with tab3:
             temp_balance = bal_target
             temp_accrued_interest = accrued_interest_input
             future_schedule_2 = []
-            sim_date = as_of_date
+            current_period_start = as_of_date
             
             for m in range(1, int(target_months) + 1):
                 if temp_balance <= 0 and temp_accrued_interest <= 0: break
-                next_end_date = get_next_end_of_month(sim_date)
-                days_m = (next_end_date - sim_date).days
+                next_end_date = get_next_end_of_month(current_period_start)
+                days_m = (next_end_date - current_period_start).days
                 
                 interest_new = temp_balance * (annual_rate / 100.0) * (days_m / 365.0)
                 total_interest_due = temp_accrued_interest + interest_new
@@ -195,7 +196,7 @@ with tab3:
                     "ตัดเงินต้น": round(principal_paid, 2),
                     "เงินต้นคงเหลือ": round(temp_balance, 2)
                 })
-                sim_date = next_end_date
+                current_period_start = next_end_date
                 
             df_res2 = pd.DataFrame(future_schedule_2)
             
