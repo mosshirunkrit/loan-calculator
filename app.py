@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 st.set_page_config(page_title="วางแผนชำระหนี้สินเชื่อ", page_icon="💰", layout="centered")
 
-st.title("💰 วางแผนผ่อนชำระสินเชื่อ ทุ่งหว้า🔥")
+st.markdown('<h2 style="font-size: 18px; font-weight: bold;">💰 วางแผนผ่อนชำระสินเชื่อ ทุ่งหว้า🔥</h2>', unsafe_allow_html=True)
 st.write("เครื่องมือคำนวณและวางแผนชำระหนี้รายเดือน")
 
 # --- ฟังก์ชันช่วยคำนวณวันสิ้นเดือนของงวดที่ n ---
