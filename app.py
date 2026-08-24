@@ -85,7 +85,7 @@ with tab1:
             interest_15_pct = total_interest * 0.15
 
             formatted_target_date = format_date_thai(target_date)
-            st.info(f"📅 ณ วันที่ {target_date.strftime('%d/%m/%Y')} (อีก {days_diff} วันข้างหน้า)")
+            st.info(f"📅 ณ วันที่ {formatted_target_date} (อีก {days_diff} วันข้างหน้า)")
             col_a, col_b, col_c = st.columns(3)
             col_a.metric("เงินต้นคงเหลือ", f"{sim_balance:,.2f} บาท")
             col_b.metric("ดอกเบี้ยสะสมทั้งหมด", f"{total_interest:,.2f} บาท")
