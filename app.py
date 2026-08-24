@@ -8,6 +8,11 @@ st.set_page_config(page_title="วางแผนชำระหนี้สิ�
 st.markdown('<h2 style="font-size: 20px; font-weight: bold;">💰 วางแผนผ่อนชำระสินเชื่อ ทุ่งหว้า🔥</h2>', unsafe_allow_html=True)
 st.write("เครื่องมือคำนวณและวางแผนชำระหนี้รายเดือน")
 
+# --- ฟังก์ชันช่วยแปลง ค.ศ. เป็น พ.ศ. สำหรับแสดงผล ---
+def format_date_thai(dt):
+    thai_year = dt.year + 543
+    return f"{dt.day:02d}/{dt.month:02d}/{thai_year}"
+    
 # --- ฟังก์ชันช่วยคำนวณวันสิ้นเดือนของงวดที่ n ---
 def get_end_of_month_by_index(start_date, month_index):
     target_year = start_date.year + (start_date.month - 1 + month_index) // 12
@@ -35,7 +40,7 @@ col1, col2, col3 = st.columns(3)
 with col1:
     principal_current = st.number_input("ยอดเงินต้นคงเหลือปัจจุบัน (บาท)", value=100000.0, step=1000.0, format="%.2f")
 with col2:
-    annual_rate = st.number_input("ดอกเบี้ย (% ต่อปี)", value=6.575, step=0.500, format="%.3f")
+    annual_rate = st.number_input("ดอกเบี้ย (% ต่อปี)", value=6.575, step=0.750, format="%.3f")
 with col3:
     as_of_date = st.date_input("ข้อมูล ณ วันที่", value=date.today())
 
@@ -78,7 +83,8 @@ with tab1:
             # คำนวณสัดส่วน 30% และ 15% ของดอกเบี้ยสะสมทั้งหมด
             interest_30_pct = total_interest * 0.30
             interest_15_pct = total_interest * 0.15
-            
+
+            formatted_target_date = format_date_thai(target_date)
             st.info(f"📅 ณ วันที่ {target_date.strftime('%d/%m/%Y')} (อีก {days_diff} วันข้างหน้า)")
             col_a, col_b, col_c = st.columns(3)
             col_a.metric("เงินต้นคงเหลือ", f"{sim_balance:,.2f} บาท")
@@ -149,7 +155,7 @@ with tab2:
                 
                 future_schedule.append({
                     "งวดที่": month_count,
-                    "วันที่สิ้นเดือน": next_end_date.strftime('%d/%m/%Y'),
+                    "วันที่สิ้นเดือน": format_date_thai(next_end_date),
                     "ยอดที่ต้องจ่าย": round(actual_pay, 2),
                     "ดอกเบี้ยที่จ่าย": round(interest_paid, 2),
                     "ดอกเบี้ยค้างเหลือ": round(temp_accrued_interest, 2),
@@ -251,7 +257,7 @@ with tab3:
                 
                 future_schedule_2.append({
                     "งวดที่": m,
-                    "วันที่สิ้นเดือน": next_end_date.strftime('%d/%m/%Y'),
+                    "วันที่สิ้นเดือน": format_date_thai(next_end_date),
                     "ยอดที่ต้องจ่าย": round(actual_pay, 2),
                     "ดอกเบี้ยที่จ่าย": round(interest_paid, 2),
                     "ดอกเบี้ยค้างเหลือ": round(temp_accrued_interest, 2),
