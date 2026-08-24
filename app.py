@@ -66,11 +66,16 @@ with tab1:
             sim_interest_new = sim_balance * (annual_rate / 100.0) * (days_diff / 365.0)
             total_interest = accrued_interest_input + sim_interest_new
             est_total = sim_balance + total_interest
+
+            # คำนวณดอกเบี้ย 1 วัน, 1 เดือน (30 วัน), และ 1 ปี
+            interest_1_day = sim_balance * (annual_rate / 100.0) * (1.0 / 365.0)
+            interest_1_month = sim_balance * (annual_rate / 100.0) * (30.0 / 365.0)
+            interest_1_year = sim_balance * (annual_rate / 100.0)
             
-            # คำนวณดอกเบี้ย 450 วันจากต้นเงินปัจจุบัน (ข้อ 1)
+            # คำนวณดอกเบี้ย 15 เดือนจากต้นเงินปัจจุบัน
             interest_450_days = sim_balance * (annual_rate / 100.0) * (450.0 / 365.0)
             
-            # คำนวณสัดส่วน 30% และ 15% ของดอกเบี้ยสะสมทั้งหมด (ข้อ 2 และ 3)
+            # คำนวณสัดส่วน 30% และ 15% ของดอกเบี้ยสะสมทั้งหมด
             interest_30_pct = total_interest * 0.30
             interest_15_pct = total_interest * 0.15
             
@@ -79,6 +84,13 @@ with tab1:
             col_a.metric("เงินต้นคงเหลือ", f"{sim_balance:,.2f} บาท")
             col_b.metric("ดอกเบี้ยสะสมทั้งหมด", f"{total_interest:,.2f} บาท")
             col_c.metric("ยอดหนี้รวมทั้งสิ้น", f"{est_total:,.2f} บาท")
+
+            st.write("---")
+            st.subheader("⏱️ ดอกเบี้ย (จากเงินต้นคงเหลือ)")
+            col_d1, col_m1, col_y1 = st.columns(3)
+            col_d1.metric("ดอกเบี้ย 1 วัน", f"{interest_1_day:,.2f} บาท")
+            col_m1.metric("ดอกเบี้ย 1 เดือน (30 วัน)", f"{interest_1_month:,.2f} บาท")
+            col_y1.metric("ดอกเบี้ย 1 ปี", f"{interest_1_year:,.2f} บาท")
             
             st.write("---")
             st.subheader("📌 ข้อมูลวิเคราะห์ดอกเบี้ยเพิ่มเติม")
@@ -183,12 +195,6 @@ with tab2:
                 col_p1, col_p2 = st.columns(2)
                 col_p1.metric("💰 สัดส่วนเงินต้นรวม", f"{p_pct:.2f}%", f"{total_principal_paid:,.2f} บาท")
                 col_p2.metric("📈 สัดส่วนดอกเบี้ยรวม", f"{i_pct:.2f}%", f"{total_interest_paid:,.2f} บาท")
-                
-                chart_ratio_df = pd.DataFrame({
-                    "ประเภท": ["เงินต้นรวม", "ดอกเบี้ยรวม"],
-                    "จำนวนเงิน (บาท)": [total_principal_paid, total_interest_paid]
-                }).set_index("ประเภท")
-                st.bar_chart(chart_ratio_df)
 
 with tab3:
     st.subheader("คำนวณงวดต่อเดือนให้หมดหนี้ตามกำหนด (ทุกสิ้นเดือน)")
