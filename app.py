@@ -204,7 +204,37 @@ with tab2:
 
 with tab3:
     st.subheader("คำนวณงวดต่อเดือนให้หมดหนี้ตามกำหนด (ทุกสิ้นเดือน)")
-    target_months = st.number_input("ระยะเวลาที่ต้องการ (เดือน)", value=12, step=1, key="inp_months")
+# เพิ่มตัวเลือกหน่วย: ระบุเป็นเดือน / ระบุเป็นปี / หรือเลือกวันที่ต้องการปิดยอดเอง
+    calc_unit = st.radio("เลือกรูปแบบการกำหนดระยะเวลา", ["ระบุเป็นเดือน", "ระบุเป็นปี", "ระบุวันที่ต้องการปิดยอดเอง"], horizontal=True, key="calc_unit_radio")
+    
+    if calc_unit == "ระบุเป็นปี":
+        col_y1, col_y2 = st.columns(2)
+        with col_y1:
+            target_years_input = st.number_input("จำนวนปี", value=1, min_value=0.0, step=1.0, format="%.1f", key="inp_years")
+        with col_y2:
+            target_months = int(target_years_input * 12)
+            st.markdown(f"<div style='margin-top: 28px;'><b>คิดเป็น:</b> {target_months} เดือน</div>", unsafe_allow_html=True)
+            
+    elif calc_unit == "ระบุวันที่ต้องการปิดยอดเอง":
+        # กำหนดค่าเริ่มต้นให้ไปข้างหน้า 1 ปี หรือเลือกตามต้องการ
+        custom_target_date = st.date_input("เลือกวันที่ต้องการปิดยอดหนี้", value=as_of_date + timedelta(days=365), key="inp_custom_date")
+        
+        # คำนวณหาจำนวนเดือนระหว่างวันปัจจุบันถึงวันที่เลือก (คิดคร่าวๆ จากส่วนต่างเดือน)
+        if custom_target_date <= as_of_date:
+            st.error("กรุณาเลือกวันที่อยู่ในอนาคต (มากกว่าวันที่ปัจจุบัน)")
+            target_months = 0
+        else:
+            # คำนวณจำนวนเดือนห่างกัน
+            diff_months = (custom_target_date.year - as_of_date.year) * 12 + (custom_target_date.month - as_of_date.month)
+            # ถ้าวันสิ้นเดือนยังไม่ถึง ให้ปรับจำนวนเดือนให้เหมาะสม
+            if custom_target_date.day < as_of_date.day and diff_months > 0:
+                diff_months -= 1
+            target_months = max(1, diff_months)
+            
+            thai_target_date_str = format_date_thai(custom_target_date)
+            st.markdown(f"📌 **เป้าหมายปิดยอดวันที่:** {thai_target_date_str} (ประมาณ **{target_months} เดือน**) <small style='color: gray;'>(ระบบจะคำนวณตัดรอบทุกสิ้นเดือน)</small>", unsafe_allow_html=True)
+    else:
+        target_months = st.number_input("ระยะเวลาที่ต้องการ (เดือน)", value=12, min_value=1, step=1, key="inp_months")
     
     if st.button("คำนวณค่างวดและแสดงตาราง", key="btn3"):
         monthly_rate = (annual_rate / 100) / 12
@@ -212,13 +242,14 @@ with tab3:
         
         if bal_target <= 0 and accrued_interest_input <= 0:
             st.success("คุณไม่มีหนี้คงเหลือแล้วครับ!")
+        elif target_months <= 0:
+            st.error("กรุณากำหนดระยะเวลาหรือวันที่ให้ถูกต้องมากกว่า 0 เดือน")
         else:
             total_debt_approx = bal_target + accrued_interest_input
             if monthly_rate > 0:
                 pmt_calc = npf.pmt(monthly_rate, target_months, -total_debt_approx)
             else:
                 pmt_calc = total_debt_approx / target_months
-                
             st.success(f"💵 ต้องส่งงวดละประมาณ **{pmt_calc:,.2f} บาท** ทุกสิ้นเดือน เป็นเวลา {target_months} เดือน")
             
             temp_balance = bal_target
