@@ -210,7 +210,7 @@ with tab3:
     if calc_unit == "ระบุเป็นปี":
         col_y1, col_y2 = st.columns(2)
         with col_y1:
-            target_years_input = st.number_input("จำนวนปี", value=1, min_value=0.0, step=1.0, format="%.1f", key="inp_years")
+            target_years_input = st.number_input("จำนวนปี", value=1.0, min_value=0.0, step=1.0, format="%.1f", key="inp_years")
         with col_y2:
             target_months = int(target_years_input * 12)
             st.markdown(f"<div style='margin-top: 28px;'><b>คิดเป็น:</b> {target_months} เดือน</div>", unsafe_allow_html=True)
