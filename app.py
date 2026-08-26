@@ -185,9 +185,11 @@ with tab2:
             else:
                 st.warning(f"⏳ จะต้องผ่อนประมาณ **{years} ปี {rem_m} เดือน** ถึงจะหมดหนี้")
             
-            # --- เตรียมตารางรวมผลลัพธ์และข้อความหมายเหตุสำหรับแสดงผลและดาวน์โหลด ---
+            # --- 1. ตารางสำหรับแสดงบนหน้าเว็บ (ไม่มีข้อความหมายเหตุ) ---
             df_res_display = pd.concat([df_res, total_row], ignore_index=True)
+            st.dataframe(df_res_display, use_container_width=True)
             
+            # --- 2. ตารางสำหรับดาวน์โหลดไฟล์ CSV (เพิ่มข้อความหมายเหตุเฉพาะตอนเซฟ) ---
             disclaimer_row = pd.DataFrame({
                 "งวดที่": ["เอกสารนี้จัดทำขึ้นเพื่อการจำลองแผนการชำระหนี้เท่านั้น ไม่ใช่สัญญาผูกพันทางกฎหมาย"],
                 "วันที่สิ้นเดือน": [""],
@@ -199,10 +201,6 @@ with tab2:
             })
             df_res_display_with_note = pd.concat([df_res_display, disclaimer_row], ignore_index=True)
             
-            # แสดงตารางบนหน้าจอ (โชว์แบบมีหมายเหตุต่อท้ายรอบเดียวจบ)
-            st.dataframe(df_res_display_with_note, use_container_width=True)
-            
-            # --- ปุ่มดาวน์โหลด CSV (ใช้ Key แยกไม่ให้ชนกับ Tab อื่น) ---
             csv_data = df_res_display_with_note.to_csv(index=False).encode('utf-8-sig')
             
             st.download_button(
@@ -340,7 +338,30 @@ with tab3:
             })
             df_res2_display = pd.concat([df_res2, total_row2], ignore_index=True)
             
+            # --- 1. แสดงตารางปกติบนหน้าเว็บ (ไม่มีข้อความหมายเหตุ) ---
             st.dataframe(df_res2_display, use_container_width=True)
+            
+            # --- 2. เตรียมตารางสำหรับดาวน์โหลดไฟล์ CSV (เพิ่มข้อความหมายเหตุเฉพาะตอนเซฟ) ---
+            disclaimer_row2 = pd.DataFrame({
+                "งวดที่": ["เอกสารนี้จัดทำขึ้นเพื่อการจำลองแผนการชำระหนี้เท่านั้น ไม่ใช่สัญญาผูกพันทางกฎหมาย"],
+                "วันที่สิ้นเดือน": [""],
+                "ยอดที่ต้องจ่าย": [""],
+                "ดอกเบี้ยที่จ่าย": [""],
+                "ดอกเบี้ยค้างเหลือ": [""],
+                "ตัดเงินต้น": [""],
+                "เงินต้นคงเหลือ": [""]
+            })
+            df_res2_display_with_note = pd.concat([df_res2_display, disclaimer_row2], ignore_index=True)
+            
+            csv_data2 = df_res2_display_with_note.to_csv(index=False).encode('utf-8-sig')
+            
+            st.download_button(
+                label="📥 ดาวน์โหลดตารางแผนการผ่อนชำระ (CSV)",
+                data=csv_data2,
+                file_name="loan_payment_plan_target.csv",
+                mime="text/csv",
+                key="download_csv_btn_3"  # ใช้ Key แยกไม่ให้ชนกับ Tab อื่น
+            )
             
             # --- สัดส่วนยอดชำระทั้งหมด (แท็บที่ 3) ---
             st.subheader("📊 สัดส่วนยอดชำระทั้งหมด (เงินต้นรวม vs ดอกเบี้ยรวม)")
@@ -355,5 +376,8 @@ with tab3:
                 col_p3, col_p4 = st.columns(2)
                 col_p3.metric("💰 สัดส่วนเงินต้นรวม", f"{p_pct2:.2f}%", f"{total_principal_paid2:,.2f} บาท")
                 col_p4.metric("📈 สัดส่วนดอกเบี้ยรวม", f"{i_pct2:.2f}%", f"{total_interest_paid2:,.2f} บาท")
-                
             
+            # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ (แท็บที่ 3) ---
+            st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
+            chart_data2 = df_res2.set_index("งวดที่")[["เงินต้นคงเหลือ"]]
+            st.line_chart(chart_data2)
