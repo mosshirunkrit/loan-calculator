@@ -187,6 +187,25 @@ with tab2:
                 st.warning(f"⏳ จะต้องผ่อนประมาณ **{years} ปี {rem_m} เดือน** ถึงจะหมดหนี้")
             
             st.dataframe(df_res_display, use_container_width=True)
+
+            # --- ฟังก์ชันที่ 2: กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
+            st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
+            
+            # เตรียมข้อมูลสำหรับวาดกราฟ (ใช้คอลัมน์ "งวดที่" เป็น index และแสดง "เงินต้นคงเหลือ")
+            chart_data = df_res.set_index("งวดที่")[["เงินต้นคงเหลือ"]]
+            st.line_chart(chart_data)
+
+            # --- ฟังก์ชันที่ 3: ปุ่มดาวน์โหลดตารางเป็น CSV ---
+            # แปลง DataFrame เป็น CSV (รองรับภาษาไทยด้วย encoding utf-8-sig)
+            csv_data = df_res_display.to_csv(index=False).encode('utf-8-sig')
+            
+            st.download_button(
+                label="📥 ดาวน์โหลดตารางแผนการผ่อนชำระ (CSV)",
+                data=csv_data,
+                file_name="loan_payment_plan.csv",
+                mime="text/csv",
+                key="download_csv_btn"
+            )
             
             # --- สัดส่วนยอดชำระทั้งหมด ---
             st.subheader("📊 สัดส่วนยอดชำระทั้งหมด (เงินต้นรวม vs ดอกเบี้ยรวม)")
