@@ -214,7 +214,7 @@ with tab2:
             # --- สัดส่วนยอดชำระทั้งหมด ---
             st.subheader("📊 สัดส่วนยอดชำระทั้งหมด (เงินต้นรวม vs ดอกเบี้ยรวม)")
             total_principal_paid = df_res["ตัดเงินต้น"].sum()
-            total_interest_paid = df_res["ดอกเบี้ยที่จ่าย"].sum()
+            total_interest_paid = df_res["ตัดดอกเบี้ย"].sum()
             grand_total = total_principal_paid + total_interest_paid
             
             if grand_total > 0:
