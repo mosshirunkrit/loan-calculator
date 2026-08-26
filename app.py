@@ -2,6 +2,7 @@ import pandas as pd
 import numpy_financial as npf
 import streamlit as st
 from datetime import date, timedelta
+import plotly.express as px
 
 st.set_page_config(page_title="วางแผนชำระหนี้สินเชื่อ", page_icon="💰", layout="centered")
 
@@ -50,7 +51,7 @@ st.info(f"📌 **เงินต้นปัจจุบัน:** {principal_cur
 
 # --- 2. การคำนวณวางแผนอนาคต (ตัดรอบทุกสิ้นเดือน) ---
 st.header("2. วางแผนอนาคต")
-tab1, tab2, tab3 = st.tabs(["🔮 หนี้คงเหลือในอนาคต", "⏳ ระยะเวลาหมดหนี้", "💵 ค่างวดที่ต้องส่ง"])
+tab1, tab2, tab3 = st.tabs(["🔮 ยอดหนี้ในอนาคต", "⏳ ระยะเวลาหมดหนี้", "💵 ค่างวดที่ต้องส่ง"])
 
 with tab1:
     st.subheader("คำนวณยอดหนี้ตามวันที่ระบุ")
@@ -91,14 +92,14 @@ with tab1:
             col_c.metric("ยอดหนี้รวมทั้งสิ้น", f"{est_total:,.2f} บาท")
 
             st.write("---")
-            st.subheader("⏱️ ดอกเบี้ย (จากเงินต้นคงเหลือ)")
+            st.subheader("💸 ดอกเบี้ย")
             col_d1, col_m1, col_y1 = st.columns(3)
             col_d1.metric("ดอกเบี้ย 1 วัน", f"{interest_1_day:,.2f} บาท")
             col_m1.metric("ดอกเบี้ย 1 เดือน (30 วัน)", f"{interest_1_month:,.2f} บาท")
             col_y1.metric("ดอกเบี้ย 1 ปี", f"{interest_1_year:,.2f} บาท")
             
             st.write("---")
-            st.subheader("📌 ข้อมูลวิเคราะห์ดอกเบี้ยเพิ่มเติม")
+            st.subheader("💡 ข้อมูลดอกเบี้ยเพิ่มเติม")
             
             col_x, col_y, col_z = st.columns(3)
             
@@ -154,10 +155,10 @@ with tab2:
                 
                 future_schedule.append({
                     "งวดที่": month_count,
-                    "วันที่สิ้นเดือน": format_date_thai(next_end_date),
-                    "ยอดที่ต้องจ่าย": round(actual_pay, 2),
-                    "ดอกเบี้ยที่จ่าย": round(interest_paid, 2),
-                    "ดอกเบี้ยค้างเหลือ": round(temp_accrued_interest, 2),
+                    "วันที่": format_date_thai(next_end_date),
+                    "ยอดจ่าย": round(actual_pay, 2),
+                    "ตัดดอกเบี้ย": round(interest_paid, 2),
+                    "ดอกเบี้ยคงเหลือ": round(temp_accrued_interest, 2),
                     "ตัดเงินต้น": round(principal_paid, 2),
                     "เงินต้นคงเหลือ": round(temp_balance, 2)
                 })
@@ -169,10 +170,10 @@ with tab2:
             
             total_row = pd.DataFrame({
                 "งวดที่": ["รวมทั้งสิ้น"],
-                "วันที่สิ้นเดือน": [""],
-                "ยอดที่ต้องจ่าย": [round(df_res["ยอดที่ต้องจ่าย"].sum(), 2)],
-                "ดอกเบี้ยที่จ่าย": [round(df_res["ดอกเบี้ยที่จ่าย"].sum(), 2)],
-                "ดอกเบี้ยค้างเหลือ": [""],
+                "วันที่": [""],
+                "ยอดจ่าย": [round(df_res["ยอดจ่าย"].sum(), 2)],
+                "ตัดดอกเบี้ย": [round(df_res["ตัดดอกเบี้ย"].sum(), 2)],
+                "ดอกเบี้ยคงเหลือ": [""],
                 "ตัดเงินต้น": [round(df_res["ตัดเงินต้น"].sum(), 2)],
                 "เงินต้นคงเหลือ": [""]
             })
@@ -182,7 +183,7 @@ with tab2:
             if month_count >= 360 and (temp_balance > 0 or temp_accrued_interest > 0):
                 st.warning("⚠️ ยอดผ่อนต่อเดือนน้อยเกินไป ทำให้ไม่สามารถปลดหนี้ได้หมดภายใน 30 ปี")
             else:
-                st.warning(f"⏳ จะต้องผ่อนประมาณ **{years} ปี {rem_m} เดือน** ถึงจะหมดหนี้")
+                st.warning(f"⏳ ต้องผ่อนประมาณ **{years} ปี {rem_m} เดือน** ถึงจะหมดหนี้")
             
             # --- 1. ตารางสำหรับแสดงบนหน้าเว็บ (ไม่มีข้อความหมายเหตุ) ---
             df_res_display = pd.concat([df_res, total_row], ignore_index=True)
@@ -191,10 +192,10 @@ with tab2:
             # --- 2. ตารางสำหรับดาวน์โหลดไฟล์ CSV (เพิ่มข้อความหมายเหตุเฉพาะตอนเซฟ) ---
             disclaimer_row = pd.DataFrame({
                 "งวดที่": ["เอกสารนี้จัดทำขึ้นเพื่อการจำลองแผนการชำระหนี้เท่านั้น ไม่ใช่สัญญาผูกพันทางกฎหมาย"],
-                "วันที่สิ้นเดือน": [""],
-                "ยอดที่ต้องจ่าย": [""],
-                "ดอกเบี้ยที่จ่าย": [""],
-                "ดอกเบี้ยค้างเหลือ": [""],
+                "วันที่": [""],
+                "ยอดจ่าย": [""],
+                "ตัดดอกเบี้ย": [""],
+                "ดอกเบี้ยคงเหลือ": [""],
                 "ตัดเงินต้น": [""],
                 "เงินต้นคงเหลือ": [""]
             })
@@ -203,9 +204,9 @@ with tab2:
             csv_data = df_res_display_with_note.to_csv(index=False).encode('utf-8-sig')
             
             st.download_button(
-                label="📥 ดาวน์โหลดตารางแผนการผ่อนชำระ (CSV)",
+                label="📥 ดาวน์โหลดแผนการชำระหนี้ (CSV)",
                 data=csv_data,
-                file_name="loan_payment_plan_tab2.csv",
+                file_name="loan_payment_plan.csv",
                 mime="text/csv",
                 key="download_csv_btn_2"
             )
@@ -226,8 +227,18 @@ with tab2:
 
             # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
             st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
-            chart_data = df_res.set_index("งวดที่")[["เงินต้นคงเหลือ"]]
-            st.line_chart(chart_data)
+           # วาดกราฟด้วย Plotly
+            fig = px.line(df_res, x="งวดที่", y="เงินต้นคงเหลือ", labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"})
+            
+            # ล็อกไม่ให้ซูม, ไม่ให้เลื่อนแพน, และซ่อนแถบเครื่องมือ (Modebar) ที่น่ารำคาญออกไป
+            fig.update_layout(
+                xaxis=dict(fixedrange=True),
+                yaxis=dict(fixedrange=True),
+                dragmode=False
+            )
+            
+            # แสดงกราฟบน Streamlit (config ปิดการซูมด้วยมือถือ/เมาส์เพิ่มความชัวร์)
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
 
 with tab3:
     st.subheader("คำนวณงวดต่อเดือนให้หมดหนี้ตามกำหนด (ทุกสิ้นเดือน)")
