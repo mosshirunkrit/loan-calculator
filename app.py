@@ -44,7 +44,6 @@ with col2:
 with col3:
     as_of_date = st.date_input("ข้อมูล ณ วันที่", value=date.today())
 
-st.write("---")
 accrued_interest_input = st.number_input("ดอกเบี้ยค้างจ่าย ณ ปัจจุบัน (บาท)", value=0.0, step=100.0, format="%.2f")
 
 st.info(f"📌 **เงินต้นปัจจุบัน:** {principal_current:,.2f} บาท | **ดอกเบี้ยค้างจ่าย:** {accrued_interest_input:,.2f} บาท")
