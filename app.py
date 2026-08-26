@@ -177,7 +177,6 @@ with tab2:
                 "ตัดเงินต้น": [round(df_res["ตัดเงินต้น"].sum(), 2)],
                 "เงินต้นคงเหลือ": [""]
             })
-            df_res_display = pd.concat([df_res, total_row], ignore_index=True)
             
             years = month_count // 12
             rem_m = month_count % 12
@@ -186,12 +185,9 @@ with tab2:
             else:
                 st.warning(f"⏳ จะต้องผ่อนประมาณ **{years} ปี {rem_m} เดือน** ถึงจะหมดหนี้")
             
-            st.dataframe(df_res_display, use_container_width=True)
-
-            # --- สร้างตารางสรุปผลพร้อมแถวข้อความหมายเหตุ ---
+            # --- เตรียมตารางรวมผลลัพธ์และข้อความหมายเหตุสำหรับแสดงผลและดาวน์โหลด ---
             df_res_display = pd.concat([df_res, total_row], ignore_index=True)
             
-            # เพิ่มแถวข้อความหมายเหตุแบบที่ 2 ไว้ล่างสุดของตาราง
             disclaimer_row = pd.DataFrame({
                 "งวดที่": ["เอกสารนี้จัดทำขึ้นเพื่อการจำลองแผนการชำระหนี้เท่านั้น ไม่ใช่สัญญาผูกพันทางกฎหมาย"],
                 "วันที่สิ้นเดือน": [""],
@@ -203,15 +199,18 @@ with tab2:
             })
             df_res_display_with_note = pd.concat([df_res_display, disclaimer_row], ignore_index=True)
             
-               # --- ปุ่มดาวน์โหลด CSV ---
+            # แสดงตารางบนหน้าจอ (โชว์แบบมีหมายเหตุต่อท้ายรอบเดียวจบ)
+            st.dataframe(df_res_display_with_note, use_container_width=True)
+            
+            # --- ปุ่มดาวน์โหลด CSV (ใช้ Key แยกไม่ให้ชนกับ Tab อื่น) ---
             csv_data = df_res_display_with_note.to_csv(index=False).encode('utf-8-sig')
             
             st.download_button(
                 label="📥 ดาวน์โหลดตารางแผนการผ่อนชำระ (CSV)",
                 data=csv_data,
-                file_name="loan_payment_plan.csv",
+                file_name="loan_payment_plan_tab2.csv",
                 mime="text/csv",
-                key="download_csv_btn"
+                key="download_csv_btn_2"
             )
 
             # --- สัดส่วนยอดชำระทั้งหมด ---
@@ -228,15 +227,11 @@ with tab2:
                 col_p1.metric("💰 สัดส่วนเงินต้นรวม", f"{p_pct:.2f}%", f"{total_principal_paid:,.2f} บาท")
                 col_p2.metric("📈 สัดส่วนดอกเบี้ยรวม", f"{i_pct:.2f}%", f"{total_interest_paid:,.2f} บาท")
 
-            # ---  กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
+            # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
             st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
-            
-            # เตรียมข้อมูลสำหรับวาดกราฟ (ใช้คอลัมน์ "งวดที่" เป็น index และแสดง "เงินต้นคงเหลือ")
             chart_data = df_res.set_index("งวดที่")[["เงินต้นคงเหลือ"]]
             st.line_chart(chart_data)
 
-
-            
 with tab3:
     st.subheader("คำนวณงวดต่อเดือนให้หมดหนี้ตามกำหนด (ทุกสิ้นเดือน)")
 # เพิ่มตัวเลือกหน่วย: ระบุเป็นเดือน / ระบุเป็นปี / หรือเลือกวันที่ต้องการปิดยอดเอง
