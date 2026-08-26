@@ -225,19 +225,35 @@ with tab2:
                 col_p1.metric("💰 สัดส่วนเงินต้นรวม", f"{p_pct:.2f}%", f"{total_principal_paid:,.2f} บาท")
                 col_p2.metric("📈 สัดส่วนดอกเบี้ยรวม", f"{i_pct:.2f}%", f"{total_interest_paid:,.2f} บาท")
 
-            # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
+            # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ (Tab 2) - โทนเขียวมีพื้นหลัง ---
             st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
-        fig = px.line(df_res, x="งวดที่", y="เงินต้นคงเหลือ", labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"})
-        fig.update_layout(
-            xaxis=dict(fixedrange=True),
-            yaxis=dict(
-                fixedrange=True,
-                tickformat=","   # บังคับแสดงตัวเลขเต็ม ใส่คอมมาคั่นหลักพัน (เช่น 150,000 แทนที่จะเป็น 150k)
-            ),
-            dragmode=False
-        )
-        
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
+            
+            fig = px.line(
+                df_res, 
+                x="งวดที่", 
+                y="เงินต้นคงเหลือ", 
+                labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"},
+                markers=True
+            )
+            
+            # ปรับแต่งเส้น สีจุด และเพิ่มพื้นหลังใต้กราฟ (Fill)
+            fig.update_traces(
+                line=dict(color='#2ECC71', width=3),  # เส้นสีเขียว
+                marker=dict(size=6, color='#27AE60'), # จุดสีเขียวเข้ม
+                fill='tozeroy',                       # เติมพื้นที่ลงไปถึงแกน X ด้านล่าง
+                fillcolor='rgba(46, 204, 113, 0.15)'  # สีเขียวโปร่งแสง (ความจาง 15%)
+            )
+            
+            fig.update_layout(
+                xaxis=dict(fixedrange=True),
+                yaxis=dict(
+                    fixedrange=True,
+                    tickformat=","
+                ),
+                dragmode=False
+            )
+            
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
 
 with tab3:
     st.subheader("คำนวณงวดต่อเดือนให้หมดหนี้ตามกำหนด (ทุกสิ้นเดือน)")
@@ -386,16 +402,32 @@ with tab3:
                 col_p3.metric("💰 สัดส่วนเงินต้นรวม", f"{p_pct2:.2f}%", f"{total_principal_paid2:,.2f} บาท")
                 col_p4.metric("📈 สัดส่วนดอกเบี้ยรวม", f"{i_pct2:.2f}%", f"{total_interest_paid2:,.2f} บาท")
             
-            # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
+            # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ (Tab 3) - โทนเขียวมีพื้นหลัง ---
             st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
-        fig2 = px.line(df_res2, x="งวดที่", y="เงินต้นคงเหลือ", labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"})
-        fig2.update_layout(
-            xaxis=dict(fixedrange=True),
-            yaxis=dict(
-                fixedrange=True,
-                tickformat=","   # บังคับแสดงตัวเลขเต็ม ใส่คอมมาคั่นหลักพัน (เช่น 150,000 แทนที่จะเป็น 150k)
-            ),
-            dragmode=False
-        )
-        
-        st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
+            
+            fig2 = px.line(
+                df_res2, 
+                x="งวดที่", 
+                y="เงินต้นคงเหลือ", 
+                labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"},
+                markers=True
+            )
+            
+            # ปรับแต่งเส้น สีจุด และเพิ่มพื้นหลังใต้กราฟ (Fill) สำหรับ Tab 3
+            fig2.update_traces(
+                line=dict(color='#2ECC71', width=3),  # เส้นสีเขียว
+                marker=dict(size=6, color='#27AE60'), # จุดสีเขียวเข้ม
+                fill='tozeroy',                       # เติมพื้นที่ลงไปถึงแกน X ด้านล่าง
+                fillcolor='rgba(46, 204, 113, 0.15)'  # สีเขียวโปร่งแสง (ความจาง 15%)
+            )
+            
+            fig2.update_layout(
+                xaxis=dict(fixedrange=True),
+                yaxis=dict(
+                    fixedrange=True,
+                    tickformat=","
+                ),
+                dragmode=False
+            )
+            
+            st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
