@@ -236,15 +236,7 @@ with tab2:
             })
             df_res_display_with_note = pd.concat([df_res_display, disclaimer_row], ignore_index=True)
             
-            # แสดงผลตารางบนหน้าเว็บ
-            st.dataframe(df_res_display_with_note, use_container_width=True)
-            
-            # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
-            st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
-            chart_data = df_res.set_index("งวดที่")[["เงินต้นคงเหลือ"]]
-            st.line_chart(chart_data)
-            
-            # --- ปุ่มดาวน์โหลด CSV ---
+               # --- ปุ่มดาวน์โหลด CSV ---
             csv_data = df_res_display_with_note.to_csv(index=False).encode('utf-8-sig')
             
             st.download_button(
@@ -252,7 +244,7 @@ with tab2:
                 data=csv_data,
                 file_name="loan_payment_plan.csv",
                 mime="text/csv",
-                key="download_csv_btn"
+                key="download_csv_btn_2"
             )
             
 with tab3:
