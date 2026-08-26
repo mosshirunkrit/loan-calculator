@@ -389,7 +389,7 @@ with tab3:
             # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
             st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
         fig2 = px.line(df_res2, x="งวดที่", y="เงินต้นคงเหลือ", labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"})
-        fig.update_layout(
+        fig2.update_layout(
             xaxis=dict(fixedrange=True),
             yaxis=dict(
                 fixedrange=True,
