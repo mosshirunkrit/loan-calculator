@@ -227,18 +227,13 @@ with tab2:
 
             # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
             st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
-           # วาดกราฟด้วย Plotly
-            fig = px.line(df_res, x="งวดที่", y="เงินต้นคงเหลือ", labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"})
-            
-            # ล็อกไม่ให้ซูม, ไม่ให้เลื่อนแพน, และซ่อนแถบเครื่องมือ (Modebar) ที่น่ารำคาญออกไป
-            fig.update_layout(
-                xaxis=dict(fixedrange=True),
-                yaxis=dict(fixedrange=True),
-                dragmode=False
-            )
-            
-            # แสดงกราฟบน Streamlit (config ปิดการซูมด้วยมือถือ/เมาส์เพิ่มความชัวร์)
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
+        fig = px.line(df_res, x="งวดที่", y="เงินต้นคงเหลือ", labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"})
+        fig.update_layout(
+            xaxis=dict(fixedrange=True),
+            yaxis=dict(fixedrange=True),
+            dragmode=False
+        )
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
 
 with tab3:
     st.subheader("คำนวณงวดต่อเดือนให้หมดหนี้ตามกำหนด (ทุกสิ้นเดือน)")
@@ -389,16 +384,10 @@ with tab3:
             
             # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
             st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
-           # วาดกราฟด้วย Plotly
-            fig = px.line(df_res, x="งวดที่", y="เงินต้นคงเหลือ", labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"})
-            
-            # ล็อกไม่ให้ซูม, ไม่ให้เลื่อนแพน, และซ่อนแถบเครื่องมือ (Modebar) ที่น่ารำคาญออกไป
-            fig.update_layout(
-                xaxis=dict(fixedrange=True),
-                yaxis=dict(fixedrange=True),
-                dragmode=False
-            )
-            
-            # แสดงกราฟบน Streamlit (config ปิดการซูมด้วยมือถือ/เมาส์เพิ่มความชัวร์)
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
-
+        fig2 = px.line(df_res2, x="งวดที่", y="เงินต้นคงเหลือ", labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"})
+        fig2.update_layout(
+            xaxis=dict(fixedrange=True),
+            yaxis=dict(fixedrange=True),
+            dragmode=False
+        )
+        st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
