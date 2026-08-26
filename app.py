@@ -230,9 +230,13 @@ with tab2:
         fig = px.line(df_res, x="งวดที่", y="เงินต้นคงเหลือ", labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"})
         fig.update_layout(
             xaxis=dict(fixedrange=True),
-            yaxis=dict(fixedrange=True),
+            yaxis=dict(
+                fixedrange=True,
+                tickformat=","   # บังคับแสดงตัวเลขเต็ม ใส่คอมมาคั่นหลักพัน (เช่น 150,000 แทนที่จะเป็น 150k)
+            ),
             dragmode=False
         )
+        
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
 
 with tab3:
@@ -385,9 +389,13 @@ with tab3:
             # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
             st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
         fig2 = px.line(df_res2, x="งวดที่", y="เงินต้นคงเหลือ", labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"})
-        fig2.update_layout(
+        fig.update_layout(
             xaxis=dict(fixedrange=True),
-            yaxis=dict(fixedrange=True),
+            yaxis=dict(
+                fixedrange=True,
+                tickformat=","   # บังคับแสดงตัวเลขเต็ม ใส่คอมมาคั่นหลักพัน (เช่น 150,000 แทนที่จะเป็น 150k)
+            ),
             dragmode=False
         )
-        st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
+        
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
