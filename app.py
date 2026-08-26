@@ -188,14 +188,7 @@ with tab2:
             
             st.dataframe(df_res_display, use_container_width=True)
 
-            # --- ฟังก์ชันที่ 2: กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
-            st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
-            
-            # เตรียมข้อมูลสำหรับวาดกราฟ (ใช้คอลัมน์ "งวดที่" เป็น index และแสดง "เงินต้นคงเหลือ")
-            chart_data = df_res.set_index("งวดที่")[["เงินต้นคงเหลือ"]]
-            st.line_chart(chart_data)
-
-            # --- ฟังก์ชันที่ 3: ปุ่มดาวน์โหลดตารางเป็น CSV ---
+            # ---  ปุ่มดาวน์โหลดตารางเป็น CSV ---
             # แปลง DataFrame เป็น CSV (รองรับภาษาไทยด้วย encoding utf-8-sig)
             csv_data = df_res_display.to_csv(index=False).encode('utf-8-sig')
             
@@ -206,7 +199,7 @@ with tab2:
                 mime="text/csv",
                 key="download_csv_btn"
             )
-            
+
             # --- สัดส่วนยอดชำระทั้งหมด ---
             st.subheader("📊 สัดส่วนยอดชำระทั้งหมด (เงินต้นรวม vs ดอกเบี้ยรวม)")
             total_principal_paid = df_res["ตัดเงินต้น"].sum()
@@ -221,6 +214,47 @@ with tab2:
                 col_p1.metric("💰 สัดส่วนเงินต้นรวม", f"{p_pct:.2f}%", f"{total_principal_paid:,.2f} บาท")
                 col_p2.metric("📈 สัดส่วนดอกเบี้ยรวม", f"{i_pct:.2f}%", f"{total_interest_paid:,.2f} บาท")
 
+            # ---  กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
+            st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
+            
+            # เตรียมข้อมูลสำหรับวาดกราฟ (ใช้คอลัมน์ "งวดที่" เป็น index และแสดง "เงินต้นคงเหลือ")
+            chart_data = df_res.set_index("งวดที่")[["เงินต้นคงเหลือ"]]
+            st.line_chart(chart_data)
+
+# --- สร้างตารางสรุปผลพร้อมแถวข้อความหมายเหตุ ---
+            df_res_display = pd.concat([df_res, total_row], ignore_index=True)
+            
+            # เพิ่มแถวข้อความหมายเหตุแบบที่ 2 ไว้ล่างสุดของตาราง
+            disclaimer_row = pd.DataFrame({
+                "งวดที่": ["เอกสารนี้จัดทำขึ้นเพื่อการจำลองแผนการชำระหนี้เท่านั้น ไม่ใช่สัญญาผูกพันทางกฎหมาย"],
+                "วันที่สิ้นเดือน": [""],
+                "ยอดที่ต้องจ่าย": [""],
+                "ดอกเบี้ยที่จ่าย": [""],
+                "ดอกเบี้ยค้างเหลือ": [""],
+                "ตัดเงินต้น": [""],
+                "เงินต้นคงเหลือ": [""]
+            })
+            df_res_display_with_note = pd.concat([df_res_display, disclaimer_row], ignore_index=True)
+            
+            # แสดงผลตารางบนหน้าเว็บ
+            st.dataframe(df_res_display_with_note, use_container_width=True)
+            
+            # --- กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ ---
+            st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
+            chart_data = df_res.set_index("งวดที่")[["เงินต้นคงเหลือ"]]
+            st.line_chart(chart_data)
+            
+            # --- ปุ่มดาวน์โหลด CSV ---
+            csv_data = df_res_display_with_note.to_csv(index=False).encode('utf-8-sig')
+            
+            st.download_button(
+                label="📥 ดาวน์โหลดตารางแผนการผ่อนชำระ (CSV)",
+                data=csv_data,
+                file_name="loan_payment_plan.csv",
+                mime="text/csv",
+                key="download_csv_btn"
+            )
+            
 with tab3:
     st.subheader("คำนวณงวดต่อเดือนให้หมดหนี้ตามกำหนด (ทุกสิ้นเดือน)")
 # เพิ่มตัวเลือกหน่วย: ระบุเป็นเดือน / ระบุเป็นปี / หรือเลือกวันที่ต้องการปิดยอดเอง
