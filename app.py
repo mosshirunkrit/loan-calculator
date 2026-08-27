@@ -51,7 +51,7 @@ st.info(f"📌 **เงินต้นปัจจุบัน:** {principal_cur
 
 # --- 2. การคำนวณวางแผนอนาคต (ตัดรอบทุกสิ้นเดือน) ---
 st.header("2. วางแผนอนาคต")
-tab1, tab2, tab3 = st.tabs(["🔮 ยอดหนี้ในอนาคต", "⏳ ระยะเวลาหมดหนี้", "💵 ค่างวดที่ต้องส่ง"])
+tab1, tab2, tab3, tab4 = st.tabs(["🔮 ยอดหนี้ในอนาคต", "⏳ ระยะเวลาหมดหนี้", "💵 ค่างวดที่ต้องส่ง", "⚖️ เปรียบเทียบ"])
 
 with tab1:
     st.subheader("คำนวณยอดหนี้ตามวันที่ระบุ")
@@ -520,7 +520,7 @@ with tab3:
             st.plotly_chart(fig_mix2, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
 
 with tab4: # หรือจะสร้างเป็น Tab แยกสำหรับการเปรียบเทียบ
-    st.subheader("⚖️ โหมดเปรียบเทียบแผนการชำระหนี้ (Plan A vs Plan B)")
+    st.subheader("⚖️ เปรียบเทียบ")
     st.markdown("เปรียบเทียบให้เห็นกันจะๆ ว่าเลือกผ่อนแบบไหน ประหยัดดอกเบี้ยกว่ากันเท่าไหร่!")
     
     col_input_a, col_input_b = st.columns(2)
