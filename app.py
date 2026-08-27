@@ -577,7 +577,7 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                 
                 m = 1
                 while temp_bal > 0 or temp_acc_int > 0:
-                    if m > 1200: # ป้องกันลูปอนันต์ (100 ปี)
+                    if m > 1200: 
                         break
                     next_end_dt = get_end_of_month_by_index(as_of_date, m)
                     days_m = (next_end_dt - prev_dt).days
@@ -585,7 +585,11 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                     interest_new = temp_bal * (annual_rate / 100.0) * (days_m / 365.0)
                     total_interest_due = temp_acc_int + interest_new
                     
-                    if temp_bal + total_interest_due <= calc_pmt:
+                    # --- เพิ่มเงื่อนไขบังคับให้จบตรงเป๊ะตามเป้าหมาย (กรณีโหมดระบุระยะเวลา) ---
+                    is_last_target_month = ("ระยะเวลา" in mode and m == int(val))
+                    
+                    if is_last_target_month or (temp_bal + total_interest_due <= calc_pmt):
+                        # ถ้างวดนี้คือเป้าหมายสุดท้ายพอดี หรือยอดหนี้เหลือน้อยกว่าค่างวด ให้โปะจ่ายปิดยอดหนี้ทั้งหมดทันที!
                         interest_paid = total_interest_due
                         principal_paid = temp_bal
                         actual_pay = interest_paid + principal_paid
@@ -614,6 +618,10 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                         "ยอดคงเหลือ": temp_bal
                     })
                     
+                    # ถ้าเงินต้นหมดและเป็นงวดเป้าหมายพอดี ให้หยุดลูปทันที (ตัดปัญหางวดเศษงอก)
+                    if temp_bal <= 0 and temp_acc_int <= 0:
+                        break
+                        
                     prev_dt = next_end_dt
                     m += 1
                     
