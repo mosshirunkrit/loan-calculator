@@ -523,11 +523,13 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
     st.subheader("⚖️ เปรียบเทียบ")
     st.markdown("เปรียบเทียบให้เห็นกันจะๆ ว่าเลือกผ่อนแบบไหน ประหยัดดอกเบี้ยกว่ากันเท่าไหร่!")
 
-# --- ส่วนเลือกรูปแบบการคำนวณ (เหมือน Tab 2 และ Tab 3) ---
+# --- ส่วนเลือกรูปแบบการคำนวณ ---
     compare_mode = st.radio(
         "เลือกวิธีเปรียบเทียบ",
-        ["เปรียบเทียบด้วย 'ยอดผ่อนต่อเดือน' (ดูว่าแผนไหนหมดเร็วกว่าและเสียดอกเบี้ยเท่าไหร่)", 
-         "เปรียบเทียบด้วย 'ระยะเวลา/เป้าหมาย' (ดูว่าแผนไหนต้องจ่ายงวดเดือนละเท่าไหร่)"],
+        [
+            "เปรียบเทียบด้วย 'ยอดผ่อนต่อเดือน' (กำหนดเงินจ่ายต่อเดือนเอง)", 
+            "เปรียบเทียบด้วย 'ระยะเวลาเป้าหมาย' (กำหนดจำนวนเดือนที่อยากให้หมดหนี้)"
+        ],
         key="compare_mode_radio"
     )
     
@@ -554,7 +556,6 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
         if bal_target <= 0 and accrued_interest_input <= 0:
             st.success("คุณไม่มีหนี้คงเหลือแล้วครับ!")
         else:
-            # --- ฟังก์ชันจำลองการผ่อนจนหนี้หมด (บาลานซ์เป็น 0) ---
             def simulate_until_debt_free(mode, val):
                 temp_bal = bal_target
                 temp_acc_int = accrued_interest_input
@@ -562,7 +563,6 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                 total_int_paid = 0.0
                 schedule = []
                 
-                # กรณีโหมดระบุระยะเวลา ต้องคำนวณหากบค่างวด (PMT) ก่อนเหมือน Tab 3
                 monthly_rate = (annual_rate / 100.0) / 12.0
                 total_debt_approx = temp_bal + temp_acc_int
                 
@@ -585,7 +585,6 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                     interest_new = temp_bal * (annual_rate / 100.0) * (days_m / 365.0)
                     total_interest_due = temp_acc_int + interest_new
                     
-                    # ถ้าจ่ายงวดนี้แล้วหนี้หมดพอดี หรือค่างวดมากกว่ายอดหนี้รวม
                     if temp_bal + total_interest_due <= calc_pmt:
                         interest_paid = total_interest_due
                         principal_paid = temp_bal
@@ -620,14 +619,14 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                     
                 total_months_used = len(schedule)
                 total_paid_all = sum([s["ยอดที่จ่าย"] for s in schedule])
-                return total_months_used, total_int_paid, total_paid_all
+                
+                # ดึงค่างวดเฉลี่ยหรือค่างวดต่อเดือนงวดแรกมาแสดงผล
+                first_month_pmt = schedule[0]["ยอดที่จ่าย"] if schedule else calc_pmt
+                return total_months_used, total_int_paid, total_paid_all, first_month_pmt
 
             # รันแผน A และ แผน B จนหมดหนี้
-            m_a, int_a, paid_a = simulate_until_debt_free(compare_mode, plan_a_val)
-            m_b, int_b, paid_b = simulate_until_debt_free(compare_mode, plan_b_val)
-            
-            diff_interest = int_a - int_b # บวกแปลว่าแผน 2 ประหยัดดอกเบี้ยกว่า
-            diff_months = m_a - m_b       # บวกแปลว่าแผน 2 ปลดหนี้เร็วกว่า
+            m_a, int_a, paid_a, pmt_a = simulate_until_debt_free(compare_mode, plan_a_val)
+            m_b, int_b, paid_b, pmt_b = simulate_until_debt_free(compare_mode, plan_b_val)
             
             st.markdown("---")
             st.subheader("📊 ผลลัพธ์การเปรียบเทียบจนหมดหนี้")
@@ -636,20 +635,45 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
             
             with col_res1:
                 st.markdown("### 📌 แผนที่ 1")
+                st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_a:,.2f} บาท/เดือน", delta_color="off")
                 st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_a} เดือน", delta_color="off")
                 st.metric("💸 ดอกเบี้ยรวมทั้งหมด", f"{int_a:,.2f} บาท", delta_color="off")
                 st.metric("💰 ยอดจ่ายรวมทั้งสิ้น", f"{paid_a:,.2f} บาท", delta_color="off")
                 
             with col_res2:
                 st.markdown("### 📌 แผนที่ 2")
-                st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_b} เดือน", f"เร็วกว่า {abs(diff_months)} เดือน" if diff_months != 0 else "เท่ากัน")
-                st.metric("💸 ดอกเบี้ยรวมทั้งหมด", f"{int_b:,.2f} บาท", f"ประหยัดขึ้น {abs(diff_interest):,.2f} บาท" if diff_interest > 0 else "")
+                diff_m_display = m_a - m_b  
+                diff_i_display = int_a - int_b  
+                diff_pmt_display = pmt_b - pmt_a # ส่วนต่างค่างวดต่อเดือน
+                
+                st.metric(
+                    "💵 ค่างวดที่ต้องจ่าย", 
+                    f"{pmt_b:,.2f} บาท/เดือน", 
+                    f"เพิ่มขึ้น {diff_pmt_display:,.2f} บาท" if diff_pmt_display > 0 else (f"ลดลง {abs(diff_pmt_display):,.2f} บาท" if diff_pmt_display < 0 else "เท่ากัน"),
+                    delta_color="inverse" if diff_pmt_display > 0 else "normal"
+                )
+                st.metric(
+                    "⏳ ระยะเวลาปลดหนี้", 
+                    f"{m_b} เดือน", 
+                    f"เร็วกว่า {diff_m_display} เดือน" if diff_m_display > 0 else (f"ช้ากว่า {abs(diff_m_display)} เดือน" if diff_m_display < 0 else "เท่ากัน"),
+                    delta_color="normal" if diff_m_display > 0 else "inverse"
+                )
+                st.metric(
+                    "💸 ดอกเบี้ยรวมทั้งหมด", 
+                    f"{int_b:,.2f} บาท", 
+                    f"ประหยัด {diff_i_display:,.2f} บาท" if diff_i_display > 0 else (f"จ่ายเพิ่ม {abs(diff_i_display):,.2f} บาท" if diff_i_display < 0 else "เท่ากัน"),
+                    delta_color="normal" if diff_i_display > 0 else "inverse"
+                )
                 st.metric("💰 ยอดจ่ายรวมทั้งสิ้น", f"{paid_b:,.2f} บาท", delta_color="off")
                 
             st.markdown("---")
-            if diff_interest > 0:
-                st.success(f"🎉 **สรุปความคุ้มค่า:** หากเลือก **แผนที่ 2** คุณจะ **หมดหนี้เร็วขึ้น {abs(diff_months)} เดือน** และ **ประหยัดดอกเบี้ยรวมไปได้ถึง 💰 {diff_interest:,.2f} บาท** เต็มๆ เมื่อเทียบกับแผนที่ 1!")
-            elif diff_interest < 0:
-                st.warning(f"⚠️ แผนที่ 1 ใช้ต้นทุนดอกเบี้ยน้อยกว่าแผนที่ 2 อยู่ {abs(diff_interest):,.2f} บาท")
+            if int_b < int_a:
+                saving_amt = int_a - int_b
+                saving_months = m_a - m_b
+                st.success(f"🎉 **สรุป:** หากเลือก **แผนที่ 2** (จ่ายเดือนละ {pmt_b:,.2f} บาท) คุณจะ **หมดหนี้เร็วขึ้น {saving_months} เดือน** และ **ประหยัดดอกเบี้ยไปได้ถึง 💰 {saving_amt:,.2f} บาท** เมื่อเทียบกับแผนที่ 1!")
+            elif int_a < int_b:
+                saving_amt = int_b - int_a
+                saving_months = m_b - m_a
+                st.success(f"🎉 **สรุป:** หากเลือก **แผนที่ 1** (จ่ายเดือนละ {pmt_a:,.2f} บาท) คุณจะ **หมดหนี้เร็วขึ้น {saving_months} เดือน** และ **ประหยัดดอกเบี้ยไปได้ถึง 💰 {saving_amt:,.2f} บาท** เมื่อเทียบกับแผนที่ 2!")
             else:
-                st.info("ℹ️ ทั้งสองแผนใช้ระยะเวลาและมีต้นทุนดอกเบี้ยรวมเท่ากันครับ")
+                st.info("ℹ️ ทั้งสองแผนใช้ระยะเวลาและมีต้นทุนดอกเบี้ยรวมเท่ากันทุกประการครับ")
