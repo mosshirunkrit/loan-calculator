@@ -430,6 +430,60 @@ with tab3:
                 mime="text/csv",
                 key="download_csv_btn_3"  # ใช้ Key แยกไม่ให้ชนกับ Tab อื่น
             )
+
+            # --- เมนูเลือกรูปแบบกราฟที่ต้องการแสดง ---
+            st.markdown("---")
+            chart_selection = st.radio(
+                "📉 เลือกกราฟที่ต้องการแสดงผล",
+                [
+                    "ไม่แสดงกราฟ", 
+                    "📈 กราฟแนวโน้มยอดเงินต้นคงเหลือ", 
+                    "📊 กราฟสัดส่วนเงินต้นและดอกเบี้ยรายงวด", 
+                    "📊 แสดงทั้งสองกราฟ"
+                ],
+                horizontal=True,
+                key="chart_choice_tab3"
+            )
+            
+            # --- เงื่อนไขการแสดงกราฟตามที่ผู้ใช้เลือก ---
+            if chart_selection in ["📈 กราฟแนวโน้มยอดเงินต้นคงเหลือ", "📊 แสดงทั้งสองกราฟ"]:
+                st.subheader("📈 กราฟแสดงแนวโน้มยอดเงินต้นคงเหลือ")
+                fig2 = px.line(
+                    df_res2, x="งวดที่", y="เงินต้นคงเหลือ", 
+                    labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)"},
+                    markers=True
+                )
+                fig2.update_traces(
+                    line=dict(color='#2ECC71', width=3),
+                    marker=dict(size=6, color='#27AE60'),
+                    fill='tozeroy',
+                    fillcolor='rgba(46, 204, 113, 0.15)'
+                )
+                fig2.update_layout(
+                    xaxis=dict(fixedrange=True),
+                    yaxis=dict(fixedrange=True, tickformat=","),
+                    dragmode=False
+                )
+                st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
+                
+            if chart_selection in ["📊 กราฟสัดส่วนเงินต้นและดอกเบี้ยรายงวด", "📊 แสดงทั้งสองกราฟ"]:
+                st.subheader("📊 สัดส่วนเงินต้นและดอกเบี้ยที่จ่ายในแต่ละงวด")
+                fig_mix2 = px.bar(
+                    df_res2, x="งวดที่", y=["ตัดเงินต้น", "ดอกเบี้ยที่จ่าย"], 
+                    labels={"value": "จำนวนเงิน (บาท)", "variable": "รายการ", "งวดที่": "งวดที่"},
+                    barmode="stack"
+                )
+                colors_mix = {'ตัดเงินต้น': '#2ECC71', 'ดอกเบี้ยที่จ่าย': '#E74C3C'}
+                for data in fig_mix2.data:
+                    if data.name in colors_mix:
+                        data.marker.color = colors_mix[data.name]
+                fig_mix2.update_layout(
+                    xaxis=dict(fixedrange=True),
+                    yaxis=dict(fixedrange=True, tickformat=","),
+                    dragmode=False,
+                    legend=dict(title="", orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                )
+                st.plotly_chart(fig_mix2, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
             
             # --- สัดส่วนยอดชำระทั้งหมด (แท็บที่ 3) ---
             st.subheader("📊 สัดส่วนยอดชำระทั้งหมด (เงินต้นรวม vs ดอกเบี้ยรวม)")
@@ -478,7 +532,7 @@ with tab3:
             # --- กราฟแสดงสัดส่วนเงินต้นและดอกเบี้ยที่จ่ายในแต่ละงวด (Tab 3) ---
             st.subheader("📊 สัดส่วนเงินต้นและดอกเบี้ยที่จ่ายในแต่ละงวด")   
             fig_mix2 = px.bar(
-                df_res, 
+                df_res2, 
                 x="งวดที่", 
                 y=["ตัดเงินต้น", "ตัดดอกเบี้ย"],  # เอา 2 ค่ามารวมกันในกราฟเดียว
                 labels={"value": "จำนวนเงิน (บาท)", "variable": "รายการ", "งวดที่": "งวดที่"},
