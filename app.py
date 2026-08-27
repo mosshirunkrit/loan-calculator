@@ -255,6 +255,49 @@ with tab2:
             
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
 
+            # --- กราฟแสดงสัดส่วนเงินต้นและดอกเบี้ยที่จ่ายในแต่ละงวด (Tab 2) ---
+            st.subheader("📊 สัดส่วนเงินต้นและดอกเบี้ยที่จ่ายในแต่ละงวด")
+            fig_mix = px.bar(
+                df_res, 
+                x="งวดที่", 
+                y=["ตัดเงินต้น", "ตัดดอกเบี้ย"],  # เอา 2 ค่ามารวมกันในกราฟเดียว
+                labels={"value": "จำนวนเงิน (บาท)", "variable": "รายการ", "งวดที่": "งวดที่"},
+                barmode="stack"  # ซ้อนแท่งกัน เพื่อให้เห็นยอดรวมค่างวดพอดี
+            )
+            
+            # กำหนดสีให้สวยงาม: เงินต้น (สีเขียว), ดอกเบี้ย (สีส้ม/แดงอ่อน หรือสีเทา)
+            fig_mix.update_traces(
+                marker=dict(line=dict(width=0))
+            )
+            
+            # ปรับแต่งธีมสีของแท่ง (ตัวอย่าง: เงินต้น = เขียว, ดอกเบี้ย = ส้มอมแดง)
+            # หรือจะใช้สีโทนเขียวเข้ม/อ่อนคู่กันก็ได้ครับ
+            colors = {'ตัดเงินต้น': '#2ECC71', 'ตัดดอกเบี้ย': '#E74C3C'}
+            for i, data in enumerate(fig_mix.data):
+                key_name = data.name
+                if key_name in colors:
+                    data.marker.color = colors[key_name]
+
+            # ล็อกแกน ไม่ให้เลื่อน และจัดรูปแบบตัวเลข
+            fig_mix.update_layout(
+                xaxis=dict(fixedrange=True),
+                yaxis=dict(
+                    fixedrange=True,
+                    tickformat=","
+                ),
+                dragmode=False,
+                legend=dict(
+                    title="",
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
+            )
+            
+            st.plotly_chart(fig_mix, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
+
 with tab3:
     st.subheader("คำนวณงวดต่อเดือนให้หมดหนี้ตามกำหนด (ทุกสิ้นเดือน)")
 # เพิ่มตัวเลือกหน่วย: ระบุเป็นเดือน / ระบุเป็นปี / หรือเลือกวันที่ต้องการปิดยอดเอง
@@ -431,3 +474,46 @@ with tab3:
             )
             
             st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
+            
+            # --- กราฟแสดงสัดส่วนเงินต้นและดอกเบี้ยที่จ่ายในแต่ละงวด (Tab 3) ---
+            st.subheader("📊 สัดส่วนเงินต้นและดอกเบี้ยที่จ่ายในแต่ละงวด")   
+            fig_mix2 = px.bar(
+                df_res, 
+                x="งวดที่", 
+                y=["ตัดเงินต้น", "ตัดดอกเบี้ย"],  # เอา 2 ค่ามารวมกันในกราฟเดียว
+                labels={"value": "จำนวนเงิน (บาท)", "variable": "รายการ", "งวดที่": "งวดที่"},
+                barmode="stack"  # ซ้อนแท่งกัน เพื่อให้เห็นยอดรวมค่างวดพอดี
+            )
+            
+            # กำหนดสีให้สวยงาม: เงินต้น (สีเขียว), ดอกเบี้ย (สีส้ม/แดงอ่อน หรือสีเทา)
+            fig_mix2.update_traces(
+                marker=dict(line=dict(width=0))
+            )
+            
+            # ปรับแต่งธีมสีของแท่ง (ตัวอย่าง: เงินต้น = เขียว, ดอกเบี้ย = ส้มอมแดง)
+            # หรือจะใช้สีโทนเขียวเข้ม/อ่อนคู่กันก็ได้ครับ
+            colors = {'ตัดเงินต้น': '#2ECC71', 'ตัดดอกเบี้ย': '#E74C3C'}
+            for i, data in enumerate(fig_mix.data):
+                key_name = data.name
+                if key_name in colors:
+                    data.marker.color = colors[key_name]
+
+            # ล็อกแกน ไม่ให้เลื่อน และจัดรูปแบบตัวเลข
+            fig_mix2.update_layout(
+                xaxis=dict(fixedrange=True),
+                yaxis=dict(
+                    fixedrange=True,
+                    tickformat=","
+                ),
+                dragmode=False,
+                legend=dict(
+                    title="",
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
+            )
+            
+            st.plotly_chart(fig_mix2, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
