@@ -630,7 +630,7 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
             m_a, int_a, paid_a, pmt_a, df_a = simulate_until_debt_free_with_schedule(compare_mode, plan_a_val)
             m_b, int_b, paid_b, pmt_b, df_b = simulate_until_debt_free_with_schedule(compare_mode, plan_b_val)
             
-           st.markdown("---")
+            st.markdown("---")
             st.subheader("📊 ผลลัพธ์การเปรียบเทียบจนหมดหนี้")
             
             col_res1, col_res2 = st.columns(2)
