@@ -521,7 +521,7 @@ with tab3:
 
 with tab4: # หรือจะสร้างเป็น Tab แยกสำหรับการเปรียบเทียบ
     st.subheader("⚖️ เปรียบเทียบ")
-    st.markdown("เปรียบเทียบแผน 1 และ แผน 2")
+    st.markdown("🤜ร่างกายต้องการปะทะ🤛")
 
 # --- ส่วนเลือกรูปแบบการคำนวณ ---
     compare_mode = st.radio(
@@ -540,7 +540,7 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
             st.markdown("### 📌 แผนที่ 1")
             plan_a_val = st.number_input("ค่างวดต่อเดือน แผน 1 (บาท)", value=5000.0, step=500.0, key="p1_pmt_mode1")
         with col_input_b:
-            st.markdown("### 📌 แผนที่ 2 (เช่น โปะเพิ่ม)")
+            st.markdown("### 📌 แผนที่ 2")
             plan_b_val = st.number_input("ค่างวดต่อเดือน แผน 2 (บาท)", value=8000.0, step=500.0, key="p2_pmt_mode1")
     else:
         with col_input_a:
