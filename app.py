@@ -518,3 +518,61 @@ with tab3:
             )
             
             st.plotly_chart(fig_mix2, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
+
+with tab4: # หรือจะสร้างเป็น Tab แยกสำหรับการเปรียบเทียบ
+    st.subheader("⚖️ โหมดเปรียบเทียบแผนการชำระหนี้ (Plan A vs Plan B)")
+    st.markdown("เปรียบเทียบให้เห็นกันจะๆ ว่าเลือกผ่อนแบบไหน ประหยัดดอกเบี้ยกว่ากันเท่าไหร่!")
+    
+    col_input_a, col_input_b = st.columns(2)
+    
+    with col_input_a:
+        st.markdown("### 📌 แผนที่ 1 (เช่น ผ่อนมาตรฐาน)")
+        plan_a_months = st.number_input("ระยะเวลาแผน 1 (เดือน)", value=12, min_value=1, key="p1_m")
+        # หรือจะให้ใส่ยอดผ่อนต่อเดือนของแผน 1 เองก็ได้ครับ
+        plan_a_pmt = st.number_input("ค่างวดต่อเดือน แผน 1 (บาท)", value=5000.0, step=500.0, key="p1_pmt")
+        
+    with col_input_b:
+        st.markdown("### 📌 แผนที่ 2 (เช่น โปะเพิ่ม/ผ่อนสั้นลง)")
+        plan_b_months = st.number_input("ระยะเวลาแผน 2 (เดือน)", value=6, min_value=1, key="p2_m")
+        plan_b_pmt = st.number_input("ค่างวดต่อเดือน แผน 2 (บาท)", value=9500.0, step=500.0, key="p2_pmt")
+
+    if st.button("🚀 เริ่มเปรียบเทียบทั้ง 2 แผน", key="btn_compare"):
+        # สมมติจำลองการคำนวณดอกเบี้ยรวมของทั้ง 2 แผน (คุณสามารถแทนที่ด้วยฟังก์ชันคำนวณจริงของคุณได้เลยครับ)
+        # ตัวอย่างจำลองการคำนวณคร่าวๆ:
+        # สมมติตัวแปรผลลัพธ์จำลอง ดอกเบี้ยรวมของแผน 1 และ 2
+        total_interest_a = plan_a_pmt * plan_a_months - principal_current # (ตัวอย่างสมมติ)
+        total_interest_b = plan_b_pmt * plan_b_months - principal_current # (ตัวอย่างสมมติ)
+        
+        # ส่วนต่างดอกเบี้ยที่ประหยัดได้
+        diff_interest = total_interest_a - total_interest_b
+        
+        st.markdown("---")
+        st.subheader("📊 ผลลัพธ์การเปรียบเทียบ")
+        
+        # แสดง Metric เทียบกัน 2 ฝั่ง
+        col_res1, col_res2 = st.columns(2)
+        
+        with col_res1:
+            st.metric(
+                label="💸 ดอกเบี้ยรวม (แผน 1)", 
+                value=f"{total_interest_a:,.2f} บาท",
+                delta=f"{plan_a_months} งวด",
+                delta_color="off"
+            )
+            
+        with col_res2:
+            st.metric(
+                label="💸 ดอกเบี้ยรวม (แผน 2)", 
+                value=f"{total_interest_b:,.2f} บาท",
+                delta=f"{plan_b_months} งวด",
+                delta_color="off"
+            )
+            
+        # 🎯 ไฮไลต์ส่วนต่างที่สะดุดตาที่สุด
+        st.markdown("---")
+        if diff_interest > 0:
+            st.success(f"🎉 **เยี่ยมไปเลย!** หากเลือก **แผนที่ 2** คุณจะ **ประหยัดดอกเบี้ยไปได้ถึง 💰 {diff_interest:,.2f} บาท** เมื่อเทียบกับแผนที่ 1")
+        elif diff_interest < 0:
+            st.warning(f"⚠️ แผนที่ 1 เสียค่าดอกเบี้ยน้อยกว่าแผนที่ 2 อยู่ {abs(diff_interest):,.2f} บาท")
+        else:
+            st.info("ℹ️ ทั้งสองแผนมีต้นทุนดอกเบี้ยรวมเท่ากันครับ")
