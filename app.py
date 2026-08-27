@@ -523,7 +523,7 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
     st.subheader("⚖️ เปรียบเทียบ")
     st.markdown("เปรียบเทียบให้เห็นกันจะๆ ว่าเลือกผ่อนแบบไหน ประหยัดดอกเบี้ยกว่ากันเท่าไหร่!")
 
-col_input_a, col_input_b = st.columns(2)
+    col_input_a, col_input_b = st.columns(2)
     
     with col_input_a:
         st.markdown("### 📌 แผนที่ 1 (เช่น ผ่อนมาตรฐาน)")
