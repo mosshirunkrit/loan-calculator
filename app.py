@@ -630,54 +630,85 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
             m_a, int_a, paid_a, pmt_a, df_a = simulate_until_debt_free_with_schedule(compare_mode, plan_a_val)
             m_b, int_b, paid_b, pmt_b, df_b = simulate_until_debt_free_with_schedule(compare_mode, plan_b_val)
             
-            st.markdown("---")
+           st.markdown("---")
             st.subheader("📊 ผลลัพธ์การเปรียบเทียบจนหมดหนี้")
             
             col_res1, col_res2 = st.columns(2)
             
-            # คำนวณส่วนต่างเตรียมไว้
-            diff_m_display = m_a - m_b  
-            diff_i_display = int_a - int_b  
-            diff_pmt_display = pmt_b - pmt_a 
-            diff_paid_display = paid_a - paid_b # แผน 1 จ่ายรวม - แผน 2 จ่ายรวม
+            # คำนวณส่วนต่างสำหรับแผนที่ 1 (เทียบกับแผน 2)
+            diff_m_a_to_b = m_b - m_a  
+            diff_i_a_to_b = int_a - int_b  
+            diff_pmt_a_to_b = pmt_a - pmt_b 
+            diff_paid_a_to_b = paid_a - paid_b 
+            
+            # คำนวณส่วนต่างสำหรับแผนที่ 2 (เทียบกับแผน 1)
+            diff_m_b_to_a = m_a - m_b  
+            diff_i_b_to_a = int_a - int_b  
+            diff_pmt_b_to_a = pmt_b - pmt_a 
+            diff_paid_b_to_a = paid_b - paid_a 
             
             with col_res1:
                 st.markdown("### 📌 แผนที่ 1")
-                st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_a:,.2f} บาท/เดือน")
-                st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_a} เดือน")
-                st.metric("💸 ดอกเบี้ยรวมทั้งหมด", f"{int_a:,.2f} บาท")
-                st.metric("💰 ยอดจ่ายรวมทั้งสิ้น", f"{paid_a:,.2f} บาท")
+                
+                # 1. ค่างวด แผน 1 (ปิดสีด้วย delta_color="off")
+                st.metric(
+                    "💵 ค่างวดที่ต้องจ่าย", 
+                    f"{pmt_a:,.2f} บาท/เดือน", 
+                    f"น้อยกว่า {abs(diff_pmt_a_to_b):,.2f} บาท" if diff_pmt_a_to_b < 0 else (f"มากกว่า {diff_pmt_a_to_b:,.2f} บาท" if diff_pmt_a_to_b > 0 else "เท่ากัน"),
+                    delta_color="off"
+                )
+                # 2. ระยะเวลา แผน 1
+                st.metric(
+                    "⏳ ระยะเวลาปลดหนี้", 
+                    f"{m_a} เดือน", 
+                    f"ช้ากว่า {diff_m_a_to_b} เดือน" if diff_m_a_to_b > 0 else (f"เร็วกว่า {abs(diff_m_a_to_b)} เดือน" if diff_m_a_to_b < 0 else "เท่ากัน"),
+                    delta_color="inverse" if diff_m_a_to_b > 0 else "normal"
+                )
+                # 3. ดอกเบี้ย แผน 1
+                st.metric(
+                    "💸 ดอกเบี้ยรวมทั้งหมด", 
+                    f"{int_a:,.2f} บาท", 
+                    f"จ่ายเพิ่ม {diff_i_a_to_b:,.2f} บาท" if diff_i_a_to_b > 0 else "ต่ำที่สุด",
+                    delta_color="inverse" if diff_i_a_to_b > 0 else "normal"
+                )
+                # 4. ยอดจ่ายรวม แผน 1
+                st.metric(
+                    "💰 ยอดจ่ายรวมทั้งสิ้น", 
+                    f"{paid_a:,.2f} บาท",
+                    f"มากกว่า {diff_paid_a_to_b:,.2f} บาท" if diff_paid_a_to_b > 0 else (f"น้อยกว่า {abs(diff_paid_a_to_b):,.2f} บาท" if diff_paid_a_to_b < 0 else "เท่ากัน"),
+                    delta_color="inverse" if diff_paid_a_to_b > 0 else "normal"
+                )
                 
             with col_res2:
                 st.markdown("### 📌 แผนที่ 2")
                 
-                # 1. ค่างวด
+                # 1. ค่างวด แผน 2 (ปิดสีด้วย delta_color="off")
                 st.metric(
                     "💵 ค่างวดที่ต้องจ่าย", 
                     f"{pmt_b:,.2f} บาท/เดือน", 
-                    f"เพิ่มขึ้น {diff_pmt_display:,.2f} บาท" if diff_pmt_display > 0 else (f"ลดลง {abs(diff_pmt_display):,.2f} บาท" if diff_pmt_display < 0 else "เท่ากัน"),
-                    delta_color="inverse" if diff_pmt_display > 0 else "normal"
+                    f"เพิ่มขึ้น {diff_pmt_b_to_a:,.2f} บาท" if diff_pmt_b_to_a > 0 else (f"ลดลง {abs(diff_pmt_b_to_a):,.2f} บาท" if diff_pmt_b_to_a < 0 else "เท่ากัน"),
+                    delta_color="off"
                 )
-                # 2. ระยะเวลา
+                # 2. ระยะเวลา แผน 2
                 st.metric(
                     "⏳ ระยะเวลาปลดหนี้", 
                     f"{m_b} เดือน", 
-                    f"เร็วกว่า {diff_m_display} เดือน" if diff_m_display > 0 else (f"ช้ากว่า {abs(diff_m_display)} เดือน" if diff_m_display < 0 else "เท่ากัน"),
-                    delta_color="normal" if diff_m_display > 0 else "inverse"
+                    f"เร็วกว่า {diff_m_b_to_a} เดือน" if diff_m_b_to_a > 0 else (f"ช้ากว่า {abs(diff_m_b_to_a)} เดือน" if diff_m_b_to_a < 0 else "เท่ากัน"),
+                    delta_color="normal" if diff_m_b_to_a > 0 else "inverse"
                 )
-                # 3. ดอกเบี้ย
+                # 3. ดอกเบี้ย แผน 2
                 st.metric(
                     "💸 ดอกเบี้ยรวมทั้งหมด", 
                     f"{int_b:,.2f} บาท", 
-                    f"ประหยัด {diff_i_display:,.2f} บาท" if diff_i_display > 0 else (f"จ่ายเพิ่ม {abs(diff_i_display):,.2f} บาท" if diff_i_display < 0 else "เท่ากัน"),
-                    delta_color="normal" if diff_i_display > 0 else "inverse"
+                    f"ประหยัด {diff_i_b_to_a:,.2f} บาท" if diff_i_b_to_a > 0 else (f"จ่ายเพิ่ม {abs(diff_i_b_to_a):,.2f} บาท" if diff_i_b_to_a < 0 else "เท่ากัน"),
+                    delta_color="normal" if diff_i_b_to_a > 0 else "inverse"
                 )
-                # 4. ยอดจ่ายรวม (เพิ่มเดลต้าให้ฝั่งขวามีความสูงเท่ากันทุกบรรทัด)
+                # 4. ยอดจ่ายรวม แผน 2
                 st.metric(
                     "💰 ยอดจ่ายรวมทั้งสิ้น", 
                     f"{paid_b:,.2f} บาท",
-                    f"ประหยัด {diff_paid_display:,.2f} บาท" if diff_paid_display > 0 else (f"จ่ายเพิ่ม {abs(diff_paid_display):,.2f} บาท" if diff_paid_display < 0 else "เท่ากัน"),
-                    delta_color="normal" if diff_paid_display > 0 else "inverse"
+                    f"ประหยัด {diff_paid_b_to_a:,.2f} บาท" if diff_paid_b_to_a > 0 else (f"จ่ายเพิ่ม {abs(diff_paid_b_to_a):,.2f} บาท" if diff_paid_b_to_a < 0 else "เท่ากัน"),
+                    delta_color="normal" if diff_paid_b_to_a > 0 else "inverse"
                 )
                 
             st.markdown("---")
