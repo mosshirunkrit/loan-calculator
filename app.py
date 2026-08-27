@@ -635,38 +635,50 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
             
             col_res1, col_res2 = st.columns(2)
             
+            # คำนวณส่วนต่างเตรียมไว้
+            diff_m_display = m_a - m_b  
+            diff_i_display = int_a - int_b  
+            diff_pmt_display = pmt_b - pmt_a 
+            diff_paid_display = paid_a - paid_b # แผน 1 จ่ายรวม - แผน 2 จ่ายรวม
+            
             with col_res1:
                 st.markdown("### 📌 แผนที่ 1")
-                st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_a:,.2f} บาท/เดือน", delta_color="off")
-                st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_a} เดือน", delta_color="off")
-                st.metric("💸 ดอกเบี้ยรวมทั้งหมด", f"{int_a:,.2f} บาท", delta_color="off")
-                st.metric("💰 ยอดจ่ายรวมทั้งสิ้น", f"{paid_a:,.2f} บาท", delta_color="off")
+                st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_a:,.2f} บาท/เดือน")
+                st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_a} เดือน")
+                st.metric("💸 ดอกเบี้ยรวมทั้งหมด", f"{int_a:,.2f} บาท")
+                st.metric("💰 ยอดจ่ายรวมทั้งสิ้น", f"{paid_a:,.2f} บาท")
                 
             with col_res2:
                 st.markdown("### 📌 แผนที่ 2")
-                diff_m_display = m_a - m_b  
-                diff_i_display = int_a - int_b  
-                diff_pmt_display = pmt_b - pmt_a 
                 
+                # 1. ค่างวด
                 st.metric(
                     "💵 ค่างวดที่ต้องจ่าย", 
                     f"{pmt_b:,.2f} บาท/เดือน", 
                     f"เพิ่มขึ้น {diff_pmt_display:,.2f} บาท" if diff_pmt_display > 0 else (f"ลดลง {abs(diff_pmt_display):,.2f} บาท" if diff_pmt_display < 0 else "เท่ากัน"),
                     delta_color="inverse" if diff_pmt_display > 0 else "normal"
                 )
+                # 2. ระยะเวลา
                 st.metric(
                     "⏳ ระยะเวลาปลดหนี้", 
                     f"{m_b} เดือน", 
                     f"เร็วกว่า {diff_m_display} เดือน" if diff_m_display > 0 else (f"ช้ากว่า {abs(diff_m_display)} เดือน" if diff_m_display < 0 else "เท่ากัน"),
                     delta_color="normal" if diff_m_display > 0 else "inverse"
                 )
+                # 3. ดอกเบี้ย
                 st.metric(
                     "💸 ดอกเบี้ยรวมทั้งหมด", 
                     f"{int_b:,.2f} บาท", 
                     f"ประหยัด {diff_i_display:,.2f} บาท" if diff_i_display > 0 else (f"จ่ายเพิ่ม {abs(diff_i_display):,.2f} บาท" if diff_i_display < 0 else "เท่ากัน"),
                     delta_color="normal" if diff_i_display > 0 else "inverse"
                 )
-                st.metric("💰 ยอดจ่ายรวมทั้งสิ้น", f"{paid_b:,.2f} บาท", delta_color="off")
+                # 4. ยอดจ่ายรวม (เพิ่มเดลต้าให้ฝั่งขวามีความสูงเท่ากันทุกบรรทัด)
+                st.metric(
+                    "💰 ยอดจ่ายรวมทั้งสิ้น", 
+                    f"{paid_b:,.2f} บาท",
+                    f"ประหยัด {diff_paid_display:,.2f} บาท" if diff_paid_display > 0 else (f"จ่ายเพิ่ม {abs(diff_paid_display):,.2f} บาท" if diff_paid_display < 0 else "เท่ากัน"),
+                    delta_color="normal" if diff_paid_display > 0 else "inverse"
+                )
                 
             st.markdown("---")
             if int_b < int_a:
@@ -707,14 +719,14 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
             )
             st.plotly_chart(fig_comp_line, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
             
-# 2. กราฟแท่งเปรียบเทียบ "ดอกเบี้ยรวม" หรือ "ยอดจ่ายรวมทั้งสิ้น" (เน้นจุดต่าง)
+# 2. กราฟแท่งเปรียบเทียบ "ดอกเบี้ยรวม" และ "ยอดจ่ายรวมทั้งสิ้น" (แสดงทศนิยม 2 ตำแหน่ง)
             st.subheader("📊 เปรียบเทียบต้นทุนรวมที่ต้องจ่าย (ดอกเบี้ยรวม & ยอดจ่ายรวม)")
             
             summary_bar_data = pd.DataFrame([
-                {"แผน": "แผนที่ 1", "ประเภท": "ดอกเบี้ยรวม", "จำนวนเงิน": int_a},
-                {"แผน": "แผนที่ 1", "ประเภท": "ยอดจ่ายรวมทั้งสิ้น", "จำนวนเงิน": paid_a},
-                {"แผน": "แผนที่ 2", "ประเภท": "ดอกเบี้ยรวม", "จำนวนเงิน": int_b},
-                {"แผน": "แผนที่ 2", "ประเภท": "ยอดจ่ายรวมทั้งสิ้น", "จำนวนเงิน": paid_b},
+                {"แผน": "แผนที่ 1", "ประเภท": "ดอกเบี้ยรวม", "จำนวนเงิน": round(int_a, 2)},
+                {"แผน": "แผนที่ 1", "ประเภท": "ยอดจ่ายรวมทั้งสิ้น", "จำนวนเงิน": round(paid_a, 2)},
+                {"แผน": "แผนที่ 2", "ประเภท": "ดอกเบี้ยรวม", "จำนวนเงิน": round(int_b, 2)},
+                {"แผน": "แผนที่ 2", "ประเภท": "ยอดจ่ายรวมทั้งสิ้น", "จำนวนเงิน": round(paid_b, 2)},
             ])
             
             fig_comp_bar = px.bar(
@@ -723,10 +735,12 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                 y="จำนวนเงิน",
                 color="ประเภท",
                 barmode="group",
-                text_auto=",", # ใส่ตัวเลขบนแท่งกราฟให้อ่านง่ายทันที
+                text="จำนวนเงิน",
                 labels={"จำนวนเงิน": "จำนวนเงิน (บาท)", "แผน": "แผนการชำระ"},
-                color_discrete_map={"ดอกเบี้ยรวม": "#E74C3C", "ยอดจ่ายรวมทั้งสิ้น": "#34495E"} # ดอกเบี้ยสีแดง, ยอดรวมสีเข้ม
+                color_discrete_map={"ดอกเบี้ยรวม": "#E74C3C", "ยอดจ่ายรวมทั้งสิ้น": "#34495E"}
             )
+            # กำหนดให้ตัวเลขบนแท่งกราฟแสดงเป็นทศนิยม 2 ตำแหน่งและมีคอมมาคั่นหลักพัน
+            fig_comp_bar.update_traces(texttemplate='%{text:,.2f}', textposition='outside')
             fig_comp_bar.update_layout(
                 xaxis=dict(fixedrange=True),
                 yaxis=dict(fixedrange=True, tickformat=","),
