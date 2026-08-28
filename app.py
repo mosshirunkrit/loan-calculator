@@ -540,7 +540,7 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
             st.markdown("### 📌 แผนที่ 1")
             plan_a_val = st.number_input("ค่างวดต่อเดือน แผน 1 (บาท)", value=5000.0, step=500.0, key="p1_pmt_mode1")
         with col_input_b:
-            st.markdown("### 📌 แผนที่ 2 (เช่น โปะเพิ่ม)")
+            st.markdown("### 📌 แผนที่ 2")
             plan_b_val = st.number_input("ค่างวดต่อเดือน แผน 2 (บาท)", value=8000.0, step=500.0, key="p2_pmt_mode1")
     else:
         with col_input_a:
@@ -642,7 +642,7 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
             m_b, int_b, paid_b, pmt_b, df_b, status_b = res_b
             
             st.markdown("---")
-            st.subheader("📊 ผลลัพธ์การเปรียบเทียบจนหมดหนี้")
+            st.subheader("📊 ผลลัพธ์การเปรียบเทียบ")
             
             if status_a == "NEVER_END" or status_b == "NEVER_END":
                 col_err1, col_err2 = st.columns(2)
@@ -699,16 +699,16 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                 if int_b < int_a:
                     saving_amt = int_a - int_b
                     saving_months = m_a - m_b
-                    st.success(f"🎉 **สรุป:** หากเลือก **แผนที่ 2** คุณจะ **หมดหนี้เร็วขึ้น {saving_months} เดือน** และ **ประหยัดดอกเบี้ยไปได้ถึง 💰 {saving_amt:,.2f} บาท** เมื่อเทียบกับแผนที่ 1!")
+                    st.success(f"🤠 **สรุป:** หากเลือก **แผนที่ 2** คุณจะ **หมดหนี้เร็วขึ้น {saving_months} เดือน** และ **ประหยัดดอกเบี้ยไปได้ถึง {saving_amt:,.2f} บาท** เมื่อเทียบกับแผนที่ 1!")
                 elif int_a < int_b:
                     saving_amt = int_b - int_a
                     saving_months = m_b - m_a
-                    st.success(f"🎉 **สรุป:** หากเลือก **แผนที่ 1** คุณจะ **หมดหนี้เร็วขึ้น {saving_months} เดือน** และ **ประหยัดดอกเบี้ยไปได้ถึง 💰 {saving_amt:,.2f} บาท** เมื่อเทียบกับแผนที่ 2!")
+                    st.success(f"🤠 **สรุป:** หากเลือก **แผนที่ 1** คุณจะ **หมดหนี้เร็วขึ้น {saving_months} เดือน** และ **ประหยัดดอกเบี้ยไปได้ถึง {saving_amt:,.2f} บาท** เมื่อเทียบกับแผนที่ 2!")
                 else:
                     st.info("ℹ️ ทั้งสองแผนใช้ระยะเวลาและมีต้นทุนดอกเบี้ยรวมเท่ากันทุกประการครับ")
 
                 st.markdown("---")
-                st.subheader("📈 กราฟเปรียบเทียบแนวโน้มยอดเงินต้นคงเหลือ (Plan A vs Plan B)")
+                st.subheader("📈 กราฟแนวโน้มยอดเงินต้น")
                 
                 df_a["แผน"] = "แผนที่ 1"
                 df_b["แผน"] = "แผนที่ 2"
@@ -731,7 +731,7 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                 )
                 st.plotly_chart(fig_comp_line, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
                 
-                st.subheader("📊 เปรียบเทียบต้นทุนรวมที่ต้องจ่าย (ดอกเบี้ยรวม & ยอดจ่ายรวม)")
+                st.subheader("📊 เปรียบเทียบเงินที่จ่าย")
                 summary_bar_data = pd.DataFrame([
                     {"แผน": "แผนที่ 1", "ประเภท": "ดอกเบี้ยรวม", "จำนวนเงิน": round(int_a, 2)},
                     {"แผน": "แผนที่ 1", "ประเภท": "ยอดจ่ายรวมทั้งสิ้น", "จำนวนเงิน": round(paid_a, 2)},
