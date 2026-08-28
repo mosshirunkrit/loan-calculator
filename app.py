@@ -581,7 +581,7 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
 
                 m = 1
                 while temp_bal > 0 or temp_acc_int > 0:
-                    if m > 12000: #เกิน 1000 ปี ถือว่าหนี้ไม่มีวันหมดเช่นกัน
+                    if m > 1200000: #เกิน 1000 ปี ถือว่าหนี้ไม่มีวันหมดเช่นกัน
                         return None, None, None, calc_pmt, pd.DataFrame(), "NEVER_END"
                         
                     next_end_dt = get_end_of_month_by_index(as_of_date, m)
