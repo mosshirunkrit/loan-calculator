@@ -540,7 +540,7 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
             st.markdown("### 📌 แผนที่ 1")
             plan_a_val = st.number_input("ค่างวดต่อเดือน แผน 1 (บาท)", value=5000.0, step=500.0, key="p1_pmt_mode1")
         with col_input_b:
-            st.markdown("### 📌 แผนที่ 2")
+            st.markdown("### 📌 แผนที่ 2 (เช่น โปะเพิ่ม)")
             plan_b_val = st.number_input("ค่างวดต่อเดือน แผน 2 (บาท)", value=8000.0, step=500.0, key="p2_pmt_mode1")
     else:
         with col_input_a:
@@ -574,15 +574,14 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                         calc_pmt = total_debt_approx / target_m
                 else:
                     calc_pmt = float(val)
-
-                # เช็คเบื้องต้น: ถ้าโหมดระบุยอดผ่อน แล้วค่างวดน้อยกว่าดอกเบี้ยเดือนแรกโดยประมาณ หนี้จะไม่มีวันหมด
+                
                 approx_first_interest = temp_bal * (annual_rate / 100.0) * (30 / 365.0) + temp_acc_int
                 if "ยอดผ่อนต่อเดือน" in mode and calc_pmt <= approx_first_interest:
                     return None, None, None, calc_pmt, pd.DataFrame(), "NEVER_END"
 
                 m = 1
                 while temp_bal > 0 or temp_acc_int > 0:
-                    if m > 1200: # เกิน 100 ปี ถือว่าหนี้ไม่มีวันหมดเช่นกัน
+                    if m > 12000: เกิน 1000 ปี ถือว่าหนี้ไม่มีวันหมดเช่นกัน
                         return None, None, None, calc_pmt, pd.DataFrame(), "NEVER_END"
                         
                     next_end_dt = get_end_of_month_by_index(as_of_date, m)
@@ -591,7 +590,6 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                     interest_new = temp_bal * (annual_rate / 100.0) * (days_m / 365.0)
                     total_interest_due = temp_acc_int + interest_new
                     
-                    # ถ้ายอดที่ต้องจ่าย (calc_pmt) น้อยกว่าดอกเบี้ยที่เกิดขึ้นในงวดนี้ และเงินต้นยังเหลือ หนี้ไม่มีวันหมดแน่นอน
                     if calc_pmt <= total_interest_due and temp_bal > 0:
                         return None, None, None, calc_pmt, pd.DataFrame(), "NEVER_END"
 
@@ -637,7 +635,6 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                 first_month_pmt = schedule[0]["ยอดที่จ่าย"] if schedule else calc_pmt
                 return total_months_used, total_int_paid, total_paid_all, first_month_pmt, pd.DataFrame(schedule), "OK"
 
-            # รันแผน A และ แผน B
             res_a = simulate_until_debt_free_with_schedule(compare_mode, plan_a_val)
             res_b = simulate_until_debt_free_with_schedule(compare_mode, plan_b_val)
             
@@ -647,25 +644,23 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
             st.markdown("---")
             st.subheader("📊 ผลลัพธ์การเปรียบเทียบจนหมดหนี้")
             
-            # เช็คกรณีหนี้ไม่มีวันหมดของแต่ละแผน
             if status_a == "NEVER_END" or status_b == "NEVER_END":
                 col_err1, col_err2 = st.columns(2)
                 with col_err1:
                     st.markdown("### 📌 แผนที่ 1")
                     if status_a == "NEVER_END":
-                        st.error("🚨 **ข้อสรุป:** ยอดผ่อนน้อยกว่าดอกเบี้ยที่งอกขึ้นมา ส่งผลให้ **หนี้ไม่มีวันหมด** ครับ!")
+                        st.error("🚨 **ข้อสรุป:** ผ่อนน้อยกว่าดอกเบี้ย ขออภัยครับ **ชาตินี้หนี้ไม่มีวันหมด** ครับ!")
                     else:
                         st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_a:,.2f} บาท/เดือน", delta_color="off")
                         st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_a} เดือน")
                 with col_err2:
                     st.markdown("### 📌 แผนที่ 2")
                     if status_b == "NEVER_END":
-                        st.error("🚨 **ข้อสรุป:** ยอดผ่อนน้อยกว่าดอกเบี้ยที่งอกขึ้นมา ส่งผลให้ **หนี้ไม่มีวันหมด** ครับ!")
+                        st.error("🚨 **ข้อสรุป:** ผ่อนน้อยกว่าดอกเบี้ย ขออภัยครับ **ชาตินี้หนี้ไม่มีวันหมด** ครับ!")
                     else:
                         st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_b:,.2f} บาท/เดือน", delta_color="off")
                         st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_b} เดือน")
             else:
-                # กรณีปกติ (คำนวณจบปกติทั้งคู่)
                 col_res1, col_res2 = st.columns(2)
                 
                 diff_pmt_a = pmt_a - pmt_b       
@@ -678,17 +673,24 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                 diff_i_b = int_b - int_a         
                 diff_paid_b = paid_b - paid_a    
                 
+                def format_months_to_years(total_months):
+                    if total_months > 12:
+                        y = total_months // 12
+                        m = total_months % 12
+                        return f"{total_months} เดือน ({y} ปี {m} เดือน)"
+                    return f"{total_months} เดือน"
+
                 with col_res1:
                     st.markdown("### 📌 แผนที่ 1")
                     st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_a:,.2f} บาท/เดือน", f"ต่างกัน {abs(diff_pmt_a):,.2f} บาท" if diff_pmt_a != 0 else "เท่ากัน", delta_color="off")
-                    st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_a} เดือน", f"เร็วกว่า {abs(diff_m_a)} เดือน" if diff_m_a < 0 else (f"ช้ากว่า {diff_m_a} เดือน" if diff_m_a > 0 else "เท่ากัน"), delta_color="normal" if diff_m_a < 0 else ("inverse" if diff_m_a > 0 else "off"))
+                    st.metric("⏳ ระยะเวลาปลดหนี้", format_months_to_years(m_a), f"เร็วกว่า {abs(diff_m_a)} เดือน" if diff_m_a < 0 else (f"ช้ากว่า {diff_m_a} เดือน" if diff_m_a > 0 else "เท่ากัน"), delta_color="normal" if diff_m_a < 0 else ("inverse" if diff_m_a > 0 else "off"))
                     st.metric("💸 ดอกเบี้ยรวมทั้งหมด", f"{int_a:,.2f} บาท", f"ประหยัด {abs(diff_i_a):,.2f} บาท" if diff_i_a < 0 else (f"จ่ายเพิ่ม {diff_i_a:,.2f} บาท" if diff_i_a > 0 else "เท่ากัน"), delta_color="normal" if diff_i_a < 0 else ("inverse" if diff_i_a > 0 else "off"))
                     st.metric("💰 ยอดจ่ายรวมทั้งสิ้น", f"{paid_a:,.2f} บาท", f"น้อยกว่า {abs(diff_paid_a):,.2f} บาท" if diff_paid_a < 0 else (f"มากกว่า {diff_paid_a:,.2f} บาท" if diff_paid_a > 0 else "เท่ากัน"), delta_color="normal" if diff_paid_a < 0 else ("inverse" if diff_paid_a > 0 else "off"))
                     
                 with col_res2:
                     st.markdown("### 📌 แผนที่ 2")
                     st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_b:,.2f} บาท/เดือน", f"ต่างกัน {abs(diff_pmt_b):,.2f} บาท" if diff_pmt_b != 0 else "เท่ากัน", delta_color="off")
-                    st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_b} เดือน", f"เร็วกว่า {abs(diff_m_b)} เดือน" if diff_m_b < 0 else (f"ช้ากว่า {diff_m_b} เดือน" if diff_m_b > 0 else "เท่ากัน"), delta_color="normal" if diff_m_b < 0 else ("inverse" if diff_m_b > 0 else "off"))
+                    st.metric("⏳ ระยะเวลาปลดหนี้", format_months_to_years(m_b), f"เร็วกว่า {abs(diff_m_b)} เดือน" if diff_m_b < 0 else (f"ช้ากว่า {diff_m_b} เดือน" if diff_m_b > 0 else "เท่ากัน"), delta_color="normal" if diff_m_b < 0 else ("inverse" if diff_m_b > 0 else "off"))
                     st.metric("💸 ดอกเบี้ยรวมทั้งหมด", f"{int_b:,.2f} บาท", f"ประหยัด {abs(diff_i_b):,.2f} บาท" if diff_i_b < 0 else (f"จ่ายเพิ่ม {diff_i_b:,.2f} บาท" if diff_i_b > 0 else "เท่ากัน"), delta_color="normal" if diff_i_b < 0 else ("inverse" if diff_i_b > 0 else "off"))
                     st.metric("💰 ยอดจ่ายรวมทั้งสิ้น", f"{paid_b:,.2f} บาท", f"น้อยกว่า {abs(diff_paid_b):,.2f} บาท" if diff_paid_b < 0 else (f"มากกว่า {diff_paid_b:,.2f} บาท" if diff_paid_b > 0 else "เท่ากัน"), delta_color="normal" if diff_paid_b < 0 else ("inverse" if diff_paid_b > 0 else "off"))
                     
@@ -704,7 +706,6 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                 else:
                     st.info("ℹ️ ทั้งสองแผนใช้ระยะเวลาและมีต้นทุนดอกเบี้ยรวมเท่ากันทุกประการครับ")
 
-                # --- 📈 ส่วนกราฟ (แสดงเฉพาะเมื่อหนี้หมดทั้งสองแผน) ---
                 st.markdown("---")
                 st.subheader("📈 กราฟเปรียบเทียบแนวโน้มยอดเงินต้นคงเหลือ (Plan A vs Plan B)")
                 
