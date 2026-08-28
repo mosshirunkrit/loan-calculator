@@ -574,16 +574,27 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                         calc_pmt = total_debt_approx / target_m
                 else:
                     calc_pmt = float(val)
-                
+
+                # เช็คเบื้องต้น: ถ้าโหมดระบุยอดผ่อน แล้วค่างวดน้อยกว่าดอกเบี้ยเดือนแรกโดยประมาณ หนี้จะไม่มีวันหมด
+                approx_first_interest = temp_bal * (annual_rate / 100.0) * (30 / 365.0) + temp_acc_int
+                if "ยอดผ่อนต่อเดือน" in mode and calc_pmt <= approx_first_interest:
+                    return None, None, None, calc_pmt, pd.DataFrame(), "NEVER_END"
+
                 m = 1
                 while temp_bal > 0 or temp_acc_int > 0:
-                    if m > 1200: break
+                    if m > 1200: # เกิน 100 ปี ถือว่าหนี้ไม่มีวันหมดเช่นกัน
+                        return None, None, None, calc_pmt, pd.DataFrame(), "NEVER_END"
+                        
                     next_end_dt = get_end_of_month_by_index(as_of_date, m)
                     days_m = (next_end_dt - prev_dt).days
                     
                     interest_new = temp_bal * (annual_rate / 100.0) * (days_m / 365.0)
                     total_interest_due = temp_acc_int + interest_new
                     
+                    # ถ้ายอดที่ต้องจ่าย (calc_pmt) น้อยกว่าดอกเบี้ยที่เกิดขึ้นในงวดนี้ และเงินต้นยังเหลือ หนี้ไม่มีวันหมดแน่นอน
+                    if calc_pmt <= total_interest_due and temp_bal > 0:
+                        return None, None, None, calc_pmt, pd.DataFrame(), "NEVER_END"
+
                     is_last_target_month = ("ระยะเวลา" in mode and m == int(val))
                     
                     if is_last_target_month or (temp_bal + total_interest_due <= calc_pmt):
@@ -624,158 +635,123 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                 total_months_used = len(schedule)
                 total_paid_all = sum([s["ยอดที่จ่าย"] for s in schedule])
                 first_month_pmt = schedule[0]["ยอดที่จ่าย"] if schedule else calc_pmt
-                return total_months_used, total_int_paid, total_paid_all, first_month_pmt, pd.DataFrame(schedule)
+                return total_months_used, total_int_paid, total_paid_all, first_month_pmt, pd.DataFrame(schedule), "OK"
 
             # รันแผน A และ แผน B
-            m_a, int_a, paid_a, pmt_a, df_a = simulate_until_debt_free_with_schedule(compare_mode, plan_a_val)
-            m_b, int_b, paid_b, pmt_b, df_b = simulate_until_debt_free_with_schedule(compare_mode, plan_b_val)
+            res_a = simulate_until_debt_free_with_schedule(compare_mode, plan_a_val)
+            res_b = simulate_until_debt_free_with_schedule(compare_mode, plan_b_val)
+            
+            m_a, int_a, paid_a, pmt_a, df_a, status_a = res_a
+            m_b, int_b, paid_b, pmt_b, df_b, status_b = res_b
             
             st.markdown("---")
-            st.subheader("📊 ผลลัพธ์การเปรียบเทียบ")
+            st.subheader("📊 ผลลัพธ์การเปรียบเทียบจนหมดหนี้")
             
-            col_res1, col_res2 = st.columns(2)
-            
-            # คำนวณส่วนต่าง (แผน 1 เทียบ แผน 2)
-            diff_pmt_a = pmt_a - pmt_b       # ถ้าบวก แปลว่าแผน 1 ค่างวดสูงกว่า
-            diff_m_a = m_a - m_b             # ถ้าบวก แปลว่าแผน 1 ใช้เวลามากกว่า (ช้ากว่า)
-            diff_i_a = int_a - int_b         # ถ้าบวก แปลว่าแผน 1 เสียดอกเบี้ยมากกว่า
-            diff_paid_a = paid_a - paid_b    # ถ้าบวก แปลว่าแผน 1 จ่ายรวมมากกว่า
-            
-            # คำนวณส่วนต่าง (แผน 2 เทียบ แผน 1)
-            diff_pmt_b = pmt_b - pmt_a       # ถ้าบวก แปลว่าแผน 2 ค่างวดสูงกว่า
-            diff_m_b = m_b - m_a             # ถ้าบวก แปลว่าแผน 2 ใช้เวลามากกว่า (ช้ากว่า)
-            diff_i_b = int_b - int_a         # ถ้าบวก แปลว่าแผน 2 เสียดอกเบี้ยมากกว่า
-            diff_paid_b = paid_b - paid_a    # ถ้าบวก แปลว่าแผน 2 จ่ายรวมมากกว่า
-            
-            with col_res1:
-                st.markdown("### 📌 แผนที่ 1")
-                
-                # 1. ค่างวด แผน 1 (ไม่ใส่สี)
-                st.metric(
-                    "💵 ค่างวดที่ต้องจ่าย", 
-                    f"{pmt_a:,.2f} บาท/เดือน", 
-                    f"ต่างกัน {abs(diff_pmt_a):,.2f} บาท" if diff_pmt_a != 0 else "เท่ากัน",
-                    delta_color="off"
-                )
-                # 2. ระยะเวลา แผน 1 (ใช้น้อยกว่า = ดี/เขียว, ใช้มากกว่า = แย่/แดง)
-                st.metric(
-                    "⏳ ระยะเวลาปลดหนี้", 
-                    f"{m_a} เดือน", 
-                    f"เร็วกว่า {abs(diff_m_a)} เดือน" if diff_m_a < 0 else (f"ช้ากว่า {diff_m_a} เดือน" if diff_m_a > 0 else "เท่ากัน"),
-                    delta_color="normal" if diff_m_a < 0 else ("inverse" if diff_m_a > 0 else "off")
-                )
-                # 3. ดอกเบี้ย แผน 1 (จ่ายน้อยกว่า = ดี/เขียว, จ่ายมากกว่า = แย่/แดง)
-                st.metric(
-                    "💸 ดอกเบี้ยรวมทั้งหมด", 
-                    f"{int_a:,.2f} บาท", 
-                    f"ประหยัด {abs(diff_i_a):,.2f} บาท" if diff_i_a < 0 else (f"จ่ายเพิ่ม {diff_i_a:,.2f} บาท" if diff_i_a > 0 else "เท่ากัน"),
-                    delta_color="normal" if diff_i_a < 0 else ("inverse" if diff_i_a > 0 else "off")
-                )
-                # 4. ยอดจ่ายรวม แผน 1
-                st.metric(
-                    "💰 ยอดจ่ายรวมทั้งสิ้น", 
-                    f"{paid_a:,.2f} บาท",
-                    f"น้อยกว่า {abs(diff_paid_a):,.2f} บาท" if diff_paid_a < 0 else (f"มากกว่า {diff_paid_a:,.2f} บาท" if diff_paid_a > 0 else "เท่ากัน"),
-                    delta_color="normal" if diff_paid_a < 0 else ("inverse" if diff_paid_a > 0 else "off")
-                )
-                
-            with col_res2:
-                st.markdown("### 📌 แผนที่ 2")
-                
-                # 1. ค่างวด แผน 2 (ปิดสี)
-                st.metric(
-                    "💵 ค่างวดที่ต้องจ่าย", 
-                    f"{pmt_b:,.2f} บาท/เดือน", 
-                    f"ต่างกัน {abs(diff_pmt_b):,.2f} บาท" if diff_pmt_b != 0 else "เท่ากัน",
-                    delta_color="off"
-                )
-                # 2. ระยะเวลา แผน 2
-                st.metric(
-                    "⏳ ระยะเวลาปลดหนี้", 
-                    f"{m_b} เดือน", 
-                    f"เร็วกว่า {abs(diff_m_b)} เดือน" if diff_m_b < 0 else (f"ช้ากว่า {diff_m_b} เดือน" if diff_m_b > 0 else "เท่ากัน"),
-                    delta_color="normal" if diff_m_b < 0 else ("inverse" if diff_m_b > 0 else "off")
-                )
-                # 3. ดอกเบี้ย แผน 2
-                st.metric(
-                    "💸 ดอกเบี้ยรวมทั้งหมด", 
-                    f"{int_b:,.2f} บาท", 
-                    f"ประหยัด {abs(diff_i_b):,.2f} บาท" if diff_i_b < 0 else (f"จ่ายเพิ่ม {diff_i_b:,.2f} บาท" if diff_i_b > 0 else "เท่ากัน"),
-                    delta_color="normal" if diff_i_b < 0 else ("inverse" if diff_i_b > 0 else "off")
-                )
-                # 4. ยอดจ่ายรวม แผน 2
-                st.metric(
-                    "💰 ยอดจ่ายรวมทั้งสิ้น", 
-                    f"{paid_b:,.2f} บาท",
-                    f"น้อยกว่า {abs(diff_paid_b):,.2f} บาท" if diff_paid_b < 0 else (f"มากกว่า {diff_paid_b:,.2f} บาท" if diff_paid_b > 0 else "เท่ากัน"),
-                    delta_color="normal" if diff_paid_b < 0 else ("inverse" if diff_paid_b > 0 else "off")
-                )
-                
-            st.markdown("---")
-            if int_b < int_a:
-                saving_amt = int_a - int_b
-                saving_months = m_a - m_b
-                st.success(f"🎉 **สรุป:** หากเลือก **แผนที่ 2** คุณจะ **หมดหนี้เร็วขึ้น {saving_months} เดือน** และ **ประหยัดดอกเบี้ยไปได้ถึง 💰 {saving_amt:,.2f} บาท** เมื่อเทียบกับแผนที่ 1!")
-            elif int_a < int_b:
-                saving_amt = int_b - int_a
-                saving_months = m_b - m_a
-                st.success(f"🎉 **สรุป:** หากเลือก **แผนที่ 1** คุณจะ **หมดหนี้เร็วขึ้น {saving_months} เดือน** และ **ประหยัดดอกเบี้ยไปได้ถึง 💰 {saving_amt:,.2f} บาท** เมื่อเทียบกับแผนที่ 2!")
+            # เช็คกรณีหนี้ไม่มีวันหมดของแต่ละแผน
+            if status_a == "NEVER_END" or status_b == "NEVER_END":
+                col_err1, col_err2 = st.columns(2)
+                with col_err1:
+                    st.markdown("### 📌 แผนที่ 1")
+                    if status_a == "NEVER_END":
+                        st.error("🚨 **ข้อสรุป:** ยอดผ่อนน้อยกว่าดอกเบี้ยที่งอกขึ้นมา ส่งผลให้ **หนี้ไม่มีวันหมด** ครับ!")
+                    else:
+                        st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_a:,.2f} บาท/เดือน", delta_color="off")
+                        st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_a} เดือน")
+                with col_err2:
+                    st.markdown("### 📌 แผนที่ 2")
+                    if status_b == "NEVER_END":
+                        st.error("🚨 **ข้อสรุป:** ยอดผ่อนน้อยกว่าดอกเบี้ยที่งอกขึ้นมา ส่งผลให้ **หนี้ไม่มีวันหมด** ครับ!")
+                    else:
+                        st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_b:,.2f} บาท/เดือน", delta_color="off")
+                        st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_b} เดือน")
             else:
-                st.info("ℹ️ ทั้งสองแผนใช้ระยะเวลาและมีต้นทุนดอกเบี้ยรวมเท่ากันทุกประการครับ")
+                # กรณีปกติ (คำนวณจบปกติทั้งคู่)
+                col_res1, col_res2 = st.columns(2)
+                
+                diff_pmt_a = pmt_a - pmt_b       
+                diff_m_a = m_a - m_b             
+                diff_i_a = int_a - int_b         
+                diff_paid_a = paid_a - paid_b    
+                
+                diff_pmt_b = pmt_b - pmt_a       
+                diff_m_b = m_b - m_a             
+                diff_i_b = int_b - int_a         
+                diff_paid_b = paid_b - paid_a    
+                
+                with col_res1:
+                    st.markdown("### 📌 แผนที่ 1")
+                    st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_a:,.2f} บาท/เดือน", f"ต่างกัน {abs(diff_pmt_a):,.2f} บาท" if diff_pmt_a != 0 else "เท่ากัน", delta_color="off")
+                    st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_a} เดือน", f"เร็วกว่า {abs(diff_m_a)} เดือน" if diff_m_a < 0 else (f"ช้ากว่า {diff_m_a} เดือน" if diff_m_a > 0 else "เท่ากัน"), delta_color="normal" if diff_m_a < 0 else ("inverse" if diff_m_a > 0 else "off"))
+                    st.metric("💸 ดอกเบี้ยรวมทั้งหมด", f"{int_a:,.2f} บาท", f"ประหยัด {abs(diff_i_a):,.2f} บาท" if diff_i_a < 0 else (f"จ่ายเพิ่ม {diff_i_a:,.2f} บาท" if diff_i_a > 0 else "เท่ากัน"), delta_color="normal" if diff_i_a < 0 else ("inverse" if diff_i_a > 0 else "off"))
+                    st.metric("💰 ยอดจ่ายรวมทั้งสิ้น", f"{paid_a:,.2f} บาท", f"น้อยกว่า {abs(diff_paid_a):,.2f} บาท" if diff_paid_a < 0 else (f"มากกว่า {diff_paid_a:,.2f} บาท" if diff_paid_a > 0 else "เท่ากัน"), delta_color="normal" if diff_paid_a < 0 else ("inverse" if diff_paid_a > 0 else "off"))
+                    
+                with col_res2:
+                    st.markdown("### 📌 แผนที่ 2")
+                    st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_b:,.2f} บาท/เดือน", f"ต่างกัน {abs(diff_pmt_b):,.2f} บาท" if diff_pmt_b != 0 else "เท่ากัน", delta_color="off")
+                    st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_b} เดือน", f"เร็วกว่า {abs(diff_m_b)} เดือน" if diff_m_b < 0 else (f"ช้ากว่า {diff_m_b} เดือน" if diff_m_b > 0 else "เท่ากัน"), delta_color="normal" if diff_m_b < 0 else ("inverse" if diff_m_b > 0 else "off"))
+                    st.metric("💸 ดอกเบี้ยรวมทั้งหมด", f"{int_b:,.2f} บาท", f"ประหยัด {abs(diff_i_b):,.2f} บาท" if diff_i_b < 0 else (f"จ่ายเพิ่ม {diff_i_b:,.2f} บาท" if diff_i_b > 0 else "เท่ากัน"), delta_color="normal" if diff_i_b < 0 else ("inverse" if diff_i_b > 0 else "off"))
+                    st.metric("💰 ยอดจ่ายรวมทั้งสิ้น", f"{paid_b:,.2f} บาท", f"น้อยกว่า {abs(diff_paid_b):,.2f} บาท" if diff_paid_b < 0 else (f"มากกว่า {diff_paid_b:,.2f} บาท" if diff_paid_b > 0 else "เท่ากัน"), delta_color="normal" if diff_paid_b < 0 else ("inverse" if diff_paid_b > 0 else "off"))
+                    
+                st.markdown("---")
+                if int_b < int_a:
+                    saving_amt = int_a - int_b
+                    saving_months = m_a - m_b
+                    st.success(f"🎉 **สรุป:** หากเลือก **แผนที่ 2** คุณจะ **หมดหนี้เร็วขึ้น {saving_months} เดือน** และ **ประหยัดดอกเบี้ยไปได้ถึง 💰 {saving_amt:,.2f} บาท** เมื่อเทียบกับแผนที่ 1!")
+                elif int_a < int_b:
+                    saving_amt = int_b - int_a
+                    saving_months = m_b - m_a
+                    st.success(f"🎉 **สรุป:** หากเลือก **แผนที่ 1** คุณจะ **หมดหนี้เร็วขึ้น {saving_months} เดือน** และ **ประหยัดดอกเบี้ยไปได้ถึง 💰 {saving_amt:,.2f} บาท** เมื่อเทียบกับแผนที่ 2!")
+                else:
+                    st.info("ℹ️ ทั้งสองแผนใช้ระยะเวลาและมีต้นทุนดอกเบี้ยรวมเท่ากันทุกประการครับ")
 
-            # --- 📈 ส่วนกราฟเปรียบเทียบ ---
-            st.markdown("---")
-            st.subheader("📈 กราฟเปรียบเทียบยอดเงินต้นคงเหลือ")
-            
-            # เตรียมข้อมูล DataFrame สำหรับพล็อตเทียบกัน
-            df_a["แผน"] = "แผนที่ 1"
-            df_b["แผน"] = "แผนที่ 2"
-            df_compare = pd.concat([df_a, df_b], ignore_index=True)
-            
-            # 1. กราฟเส้นเทียบยอดหนี้คงเหลือ
-            fig_comp_line = px.line(
-                df_compare, 
-                x="งวดที่", 
-                y="เงินต้นคงเหลือ", 
-                color="แผน",
-                markers=True,
-                labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)", "แผน": "แผนการชำระ"},
-                color_discrete_map={"แผนที่ 1": "#3498DB", "แผนที่ 2": "#2ECC71"} # แผน 1 สีฟ้า, แผน 2 สีเขียว
-            )
-            fig_comp_line.update_layout(
-                xaxis=dict(fixedrange=True),
-                yaxis=dict(fixedrange=True, tickformat=","),
-                dragmode=False,
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-            )
-            st.plotly_chart(fig_comp_line, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
-            
-# 2. กราฟแท่งเปรียบเทียบ "ดอกเบี้ยรวม" และ "ยอดจ่ายรวมทั้งสิ้น" (แสดงทศนิยม 2 ตำแหน่ง)
-            st.subheader("📊 เปรียบเทียบเงินที่ต้องจ่าย (ดอกเบี้ยรวม & ยอดจ่ายรวม)")
-            
-            summary_bar_data = pd.DataFrame([
-                {"แผน": "แผนที่ 1", "ประเภท": "ดอกเบี้ยรวม", "จำนวนเงิน": round(int_a, 2)},
-                {"แผน": "แผนที่ 1", "ประเภท": "ยอดจ่ายรวมทั้งสิ้น", "จำนวนเงิน": round(paid_a, 2)},
-                {"แผน": "แผนที่ 2", "ประเภท": "ดอกเบี้ยรวม", "จำนวนเงิน": round(int_b, 2)},
-                {"แผน": "แผนที่ 2", "ประเภท": "ยอดจ่ายรวมทั้งสิ้น", "จำนวนเงิน": round(paid_b, 2)},
-            ])
-            
-            fig_comp_bar = px.bar(
-                summary_bar_data,
-                x="แผน",
-                y="จำนวนเงิน",
-                color="ประเภท",
-                barmode="group",
-                text="จำนวนเงิน",
-                labels={"จำนวนเงิน": "จำนวนเงิน (บาท)", "แผน": "แผนการชำระ"},
-                color_discrete_map={"ดอกเบี้ยรวม": "#E74C3C", "ยอดจ่ายรวมทั้งสิ้น": "#34495E"}
-            )
-            # กำหนดให้ตัวเลขบนแท่งกราฟแสดงเป็นทศนิยม 2 ตำแหน่งและมีคอมมาคั่นหลักพัน
-            fig_comp_bar.update_traces(texttemplate='%{text:,.2f}', textposition='outside')
-            fig_comp_bar.update_layout(
-                xaxis=dict(fixedrange=True),
-                yaxis=dict(fixedrange=True, tickformat=","),
-                dragmode=False,
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-            )
-            st.plotly_chart(fig_comp_bar, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
+                # --- 📈 ส่วนกราฟ (แสดงเฉพาะเมื่อหนี้หมดทั้งสองแผน) ---
+                st.markdown("---")
+                st.subheader("📈 กราฟเปรียบเทียบแนวโน้มยอดเงินต้นคงเหลือ (Plan A vs Plan B)")
+                
+                df_a["แผน"] = "แผนที่ 1"
+                df_b["แผน"] = "แผนที่ 2"
+                df_compare = pd.concat([df_a, df_b], ignore_index=True)
+                
+                fig_comp_line = px.line(
+                    df_compare, 
+                    x="งวดที่", 
+                    y="เงินต้นคงเหลือ", 
+                    color="แผน",
+                    markers=True,
+                    labels={"งวดที่": "งวดที่", "เงินต้นคงเหลือ": "เงินต้นคงเหลือ (บาท)", "แผน": "แผนการชำระ"},
+                    color_discrete_map={"แผนที่ 1": "#3498DB", "แผนที่ 2": "#2ECC71"}
+                )
+                fig_comp_line.update_layout(
+                    xaxis=dict(fixedrange=True),
+                    yaxis=dict(fixedrange=True, tickformat=","),
+                    dragmode=False,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                )
+                st.plotly_chart(fig_comp_line, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
+                
+                st.subheader("📊 เปรียบเทียบต้นทุนรวมที่ต้องจ่าย (ดอกเบี้ยรวม & ยอดจ่ายรวม)")
+                summary_bar_data = pd.DataFrame([
+                    {"แผน": "แผนที่ 1", "ประเภท": "ดอกเบี้ยรวม", "จำนวนเงิน": round(int_a, 2)},
+                    {"แผน": "แผนที่ 1", "ประเภท": "ยอดจ่ายรวมทั้งสิ้น", "จำนวนเงิน": round(paid_a, 2)},
+                    {"แผน": "แผนที่ 2", "ประเภท": "ดอกเบี้ยรวม", "จำนวนเงิน": round(int_b, 2)},
+                    {"แผน": "แผนที่ 2", "ประเภท": "ยอดจ่ายรวมทั้งสิ้น", "จำนวนเงิน": round(paid_b, 2)},
+                ])
+                
+                fig_comp_bar = px.bar(
+                    summary_bar_data,
+                    x="แผน",
+                    y="จำนวนเงิน",
+                    color="ประเภท",
+                    barmode="group",
+                    text="จำนวนเงิน",
+                    labels={"จำนวนเงิน": "จำนวนเงิน (บาท)", "แผน": "แผนการชำระ"},
+                    color_discrete_map={"ดอกเบี้ยรวม": "#E74C3C", "ยอดจ่ายรวมทั้งสิ้น": "#34495E"}
+                )
+                fig_comp_bar.update_traces(texttemplate='%{text:,.2f}', textposition='outside')
+                fig_comp_bar.update_layout(
+                    xaxis=dict(fixedrange=True),
+                    yaxis=dict(fixedrange=True, tickformat=","),
+                    dragmode=False,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                )
+                st.plotly_chart(fig_comp_bar, use_container_width=True, config={'displayModeBar': False, 'scrollZoom': False})
