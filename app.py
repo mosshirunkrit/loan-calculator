@@ -677,7 +677,7 @@ with tab4: # หรือจะสร้างเป็น Tab แยกสำ�
                     if total_months > 12:
                         y = total_months // 12
                         m = total_months % 12
-                        return f"{total_months} เดือน ({y} ปี {m} เดือน)"
+                        return f"{total_months} เดือน <span style='font-size:0.75em; color:gray;'>( {y} ปี {m} เดือน )</span>"
                     return f"{total_months} เดือน"
 
                 with col_res1:
