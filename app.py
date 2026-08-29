@@ -19,9 +19,10 @@ st.markdown("""
 
 st.markdown("""
     <style>
-    .stApp {
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%);
-        background-attachment: fixed;
+    /* บังคับเปลี่ยนพื้นหลังแอปพลิเคชันให้ไล่สีเขียวมิ้นท์พาสเทล */
+    [data-testid="stAppViewContainer"] {
+        background-image: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%) !important;
+        background-attachment: fixed !important;
     }
     </style>
 """, unsafe_allow_html=True)
