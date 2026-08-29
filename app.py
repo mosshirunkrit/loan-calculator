@@ -9,10 +9,10 @@ st.set_page_config(page_title="วางแผนชำระหนี้สิ�
 # ตั้งค่าฟอนต์ Prompt ทั้งหน้าเว็บ
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
 
     * {
-        font-family: 'Prompt', sans-serif !important;
+        font-family: 'Sarabun', sans-serif !important;
     }
     </style>
 """, unsafe_allow_html=True)
