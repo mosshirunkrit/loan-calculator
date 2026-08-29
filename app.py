@@ -19,17 +19,9 @@ st.markdown("""
 
 st.markdown("""
     <style>
-    /* ตั้งค่าพื้นหลังแอปพลิเคชันแบบไล่ระดับสีเขียว (Gradient Background) */
     .stApp {
-        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%, #a5d6a7 100%);
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%);
         background-attachment: fixed;
-    }
-    
-    /* (ทางเลือก) ทำให้กล่อง container หรือส่วนแสดงผลมีความโปร่งแสงเล็กน้อย เพื่อให้กลืนไปกับพื้นหลัง */
-    div[data-testid="stVerticalBlock"] > div[data-testid="stContainer"] {
-        background-color: rgba(255, 255, 255, 0.75);
-        border-radius: 10px;
-        padding: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
