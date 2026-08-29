@@ -6,6 +6,17 @@ import plotly.express as px
 
 st.set_page_config(page_title="วางแผนชำระหนี้สินเชื่อ", page_icon="💰", layout="centered")
 
+# ตั้งค่าฟอนต์ Prompt ทั้งหน้าเว็บ
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+
+    * {
+        font-family: 'Prompt', sans-serif !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 st.markdown('<h2 style="font-size: 20px; font-weight: bold;">💰 วางแผนผ่อนชำระสินเชื่อ ทุ่งหว้า🔥</h2>', unsafe_allow_html=True)
 st.write("เครื่องมือคำนวณและวางแผนชำระหนี้รายเดือน")
 
