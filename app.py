@@ -647,21 +647,19 @@ with tab4:
             if status_a == "NEVER_END" or status_b == "NEVER_END":
                 col_err1, col_err2 = st.columns(2)
                 with col_err1:
-                    with st.container(border=True):
-                        st.markdown("### 📌 แผนที่ 1")
-                        if status_a == "NEVER_END":
-                            st.error("🚨 **ข้อสรุป:** ผ่อนน้อยกว่าดอกเบี้ย ขออภัยครับ **ชาตินี้หนี้ไม่มีวันหมด** ครับ!")
-                        else:
-                            st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_a:,.2f} บาท/เดือน", delta_color="off")
-                            st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_a} เดือน")
+                    st.markdown("### 📌 แผนที่ 1")
+                    if status_a == "NEVER_END":
+                        st.error("🚨 **ข้อสรุป:** ผ่อนน้อยกว่าดอกเบี้ย ขออภัยครับ **ชาตินี้หนี้ไม่มีวันหมด** ครับ!")
+                    else:
+                        st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_a:,.2f} บาท/เดือน", delta_color="off")
+                        st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_a} เดือน")
                 with col_err2:
-                    with st.container(border=True):
-                        st.markdown("### 📌 แผนที่ 2")
-                        if status_b == "NEVER_END":
-                            st.error("🚨 **ข้อสรุป:** ผ่อนน้อยกว่าดอกเบี้ย ขออภัยครับ **ชาตินี้หนี้ไม่มีวันหมด** ครับ!")
-                        else:
-                            st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_b:,.2f} บาท/เดือน", delta_color="off")
-                            st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_b} เดือน")
+                    st.markdown("### 📌 แผนที่ 2")
+                    if status_b == "NEVER_END":
+                        st.error("🚨 **ข้อสรุป:** ผ่อนน้อยกว่าดอกเบี้ย ขออภัยครับ **ชาตินี้หนี้ไม่มีวันหมด** ครับ!")
+                    else:
+                        st.metric("💵 ค่างวดที่ต้องจ่าย", f"{pmt_b:,.2f} บาท/เดือน", delta_color="off")
+                        st.metric("⏳ ระยะเวลาปลดหนี้", f"{m_b} เดือน")
             else:
                 col_res1, col_res2 = st.columns(2)
                 
