@@ -17,16 +17,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-    <style>
-    /* บังคับเปลี่ยนพื้นหลังแอปพลิเคชันให้ไล่สีเขียวมิ้นท์พาสเทล */
-    [data-testid="stAppViewContainer"] {
-        background-image: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%) !important;
-        background-attachment: fixed !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
 st.markdown('<h2 style="font-size: 20px; font-weight: bold;">💰 วางแผนผ่อนชำระสินเชื่อ ทุ่งหว้า🔥</h2>', unsafe_allow_html=True)
 st.write("เครื่องมือคำนวณและวางแผนชำระหนี้รายเดือน")
 
